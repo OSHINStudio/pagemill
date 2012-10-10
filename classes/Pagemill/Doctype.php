@@ -26,20 +26,20 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	public function tagRegistry() {
 		return $this->_tagRegistry;
 	}
-	public static function ForFile($filename) {
+	public static function ForFile($filename, $nsPrefix = '') {
 		$extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 		$cls = (isset(self::$_extensions[$extension]) ? self::$_extensions[$extension] : 'Pagemill_Doctype');
 		if ($cls != 'Pagemill_Doctype' && !is_subclass_of($cls, 'Pagemill_Doctype')) {
 			throw new Exception("Doctype class must be a subclass of Pagemill_Doctype");
 		}
-		return new $cls();
+		return new $cls($nsPrefix);
 	}
-	public static function ForDoctype($doctype) {
+	public static function ForDoctype($doctype, $nsPrefix = '') {
 		$cls = (isset(self::$_doctypes[$doctype]) ? self::$_doctypes[$doctype] : 'Pagemill_Doctype');
 		if ($cls != 'Pagemill_Doctype' && !is_subclass_of($cls, 'Pagemill_Doctype')) {
 			throw new Exception("Doctype class must be a subclass of Pagemill_Doctype");
 		}
-		return new $cls();		
+		return new $cls($nsPrefix);
 	}
 	public static function RegisterDoctype($root, $class, $namespaceUri = '') {
 		self::$_doctypes[$root] = $class;

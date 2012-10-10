@@ -1,16 +1,33 @@
 <?php
 
-class Pagemill_Data implements ArrayAccess {
+class Pagemill_Data implements ArrayAccess, Iterator {
 	private $_data = array();
 	private static $_compiled = array();
+	private $_iteratorPos = -1;
 	public function __construct() {
 		
+	}
+	public static function LikeArray($value) {
+		return (
+			(is_array($value))
+			|| ($value instanceof ArrayAccess && $value instanceof Iterator && $value instanceof Countable)
+		);
 	}
 	public function set($key, $value) {
 		$this->_data[$key] = $value;
 	}
 	public function get($key) {
+		if (!isset($this->_data[$key])) return null;
+		$value = $this->_data[$key];
+		if (is_scalar($value) || is_array($value) || self::LikeArray($value)) {
+			return $value;
+		}
+		die('What is this?');
+		// TODO: Make the value somethng useful
 		return (isset($this->_data[$key]) ? $this->_data[$key] : null);
+	}
+	public function getArray() {
+		return $this->_data;
 	}
 	private static function _Compile($expression, $dataNodeName = 'data') {
 		static $defaultBlank = "return '';";
@@ -217,18 +234,36 @@ class Pagemill_Data implements ArrayAccess {
 	}
 	//##################   ArrayAccess special methods.  #####################\\
 	public function offsetSet($offset, $value) {
-		//echo "Calling offsetSet in " . __CLASS__ . "!<br/>"; // DEBUG //
 		$this->set($offset, $value, false);
 	}
 	public function offsetExists($offset) {
-		// I need to use this method because it includes derived properties.
 		return isset($this->_data[$offset]);
 	}
 	public function offsetUnset($offset) {
-		// @todo Should this be disabled?...
 		unset($this->_data[$offset]);
 	}
 	public function offsetGet($offset) {
 		return $this->get($offset);
+	}
+	//###################   Iterator special methods.  #######################\\
+	public function rewind() {
+		$this->_iteratorPos = 0;
+	}
+	public function current() {
+		$keys = array_keys($this->_data);
+		if(!isset($keys[$this->_iteratorPos])) return null;
+		return $this->get($keys[$this->_iteratorPos]);
+	}
+	public function key() {
+		$keys = array_keys($this->_data);
+		if (!isset($keys[$this->_iteratorPos])) return null;
+		return $keys[$this->_iteratorPos];
+	}
+	public function next() {
+		$this->_iteratorPos++;
+		return $this->current();
+	}
+	public function valid() {
+		return ($this->key() !== null);
 	}
 }
