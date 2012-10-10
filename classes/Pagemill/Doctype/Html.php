@@ -1,8 +1,9 @@
 <?php
 
 class Pagemill_Doctype_Html extends Pagemill_Doctype {
-	public function __construct($nsPrefix = '') {
+	public function __construct($nsPrefix) {
 		parent::__construct($nsPrefix);
+		$this->registerTag('a', 'Pagemill_Tag');
 	}
 	public function entityReferences() {
 		static $entities = null;

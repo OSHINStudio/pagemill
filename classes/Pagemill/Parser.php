@@ -7,9 +7,14 @@ class Pagemill_Parser {
 	private $_tagRegistry = array();
 	private $_xmlDeclString = '';
 	private $_doctypeString = '';
+	private $_attributeRegistry = array();
 	private $_root = null;
 	private $_currentCharacterData = '';
+	private $_namespaces;
 	public function __construct(Pagemill_Doctype $doctype = null) {
+		if (is_null($doctype)) {
+			$doctype = new Pagemill_Doctype('');
+		}
 		$this->_doctype = $doctype;
 	}
 	/**
@@ -18,6 +23,8 @@ class Pagemill_Parser {
 	 * @return Pagemill_Tag
 	 */
 	public function parse($source) {
+		// TODO: The parser needs to add the Template doctype automatically
+		// if it doesn't exist and should.
 		static $pagemillDoctype = null;
 		if (is_null($pagemillDoctype)) {
 			$pagemillDoctype = new Pagemill_Doctype_Template('pm');
@@ -31,10 +38,8 @@ class Pagemill_Parser {
 			$xmlDecl = $matches[0];
 		}
 		// Check for a doctype
-		$this->_doctype = null;
-		$doctypeString = '';
+		$doctype = '';
 		if (preg_match('/^[\s\S]*?<\!DOCTYPE +([\w\W\s\S]*?)>/', substr($source, strlen($xmlDecl)), $matches)) {
-			$doctypeString = trim($matches[0]);
 			$parts = explode(' ', trim($matches[1]));
 			$doctype = trim($parts[0]);
 			$this->_doctype = Pagemill_Doctype::ForDoctype($doctype);
@@ -43,27 +48,26 @@ class Pagemill_Parser {
 				$source = substr($source, 0, strlen($xmlDecl . $matches[0]) - 1) . "[\n" . $this->_doctype->entityReferences() . "\n]>" . substr($source, strlen($xmlDecl . $matches[0]));
 			}
 		}
-		$this->_xmlDeclString = $xmlDecl;
-		$this->_doctypeString = $doctypeString;
-		if (!$this->_doctype) {
-			// Try to get a doctype from the root element name
-			if (preg_match('/^<([a-z0-9\-_]+)/i', trim(substr($source, strlen($xmlDecl))), $matches)) {
-				$this->_doctype = Pagemill_Doctype::ForDoctype($matches[1]);
-				if ($this->_doctype) {
-					$source = substr($source, 0, strlen($xmlDecl)) . "<!DOCTYPE {$matches[1]} [\n" . $this->_doctype->entityReferences() . "\n]>" . substr($source, strlen($xmlDecl));
-				}
-			}
-		}
 		$this->_xmlParser = xml_parser_create();
 		xml_parser_set_option($this->_xmlParser, XML_OPTION_CASE_FOLDING, 0);
 		xml_set_element_handler($this->_xmlParser, array($this, '_xmlStartElement'), array($this, '_xmlEndElement'));
 		//xml_set_default_handler($this->_xmlParser, array($this, '_xmlDefault'));
 		xml_set_character_data_handler($this->_xmlParser, array($this, '_xmlCharacter'));
-		$result = xml_parse($this->_xmlParser, $source, false);
+		$result = xml_parse($this->_xmlParser, $source);
 		if (!$result) {
 			echo xml_error_string(xml_get_error_code($this->_xmlParser));
 		}
 		return $this->_root;
+	}
+	private function _declareNamespace($prefix, $uri) {
+		if (isset($this->_namespaces[$prefix])) {
+			throw new Exception("Namespace prefix {$prefix} declared more than once");
+		}
+		$this->_namespaces[$prefix] = $uri;
+		$doctype = Pagemill_Doctype::ForNamespaceUri($uri, $prefix);
+		// Maybe need a better way to compare this doctype to the default
+		if ($doctype == $this->_doctype) return;
+		$this->_tagRegistry = array_merge($this->_tagRegistry, $doctype->tagRegistry());
 	}
 	private function _xmlStartElement($parser, $name, $attributes) {
 		$last = null;
@@ -72,6 +76,14 @@ class Pagemill_Parser {
 			if ($this->_currentCharacterData) {
 				$last->appendText($this->_currentCharacterData);
 				$this->_currentCharacterData = '';
+			}
+		}
+		if (substr($name, 0, 3) == 'pm:' && !isset($this->_namespaces['pm'])) {
+			$this->_declareNamespace('pm', 'http://typeframe.com/pagemill');
+		}
+		foreach ($attributes as $k => $v) {
+			if ($k == 'xmlns' || substr($k, 0, 6) == 'xmlns:') {
+				$this->_declareNamespace(substr($k, 6), $v);
 			}
 		}
 		if (isset($this->_tagRegistry[$name])) {
