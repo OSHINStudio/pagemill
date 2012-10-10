@@ -3,6 +3,14 @@
 class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	private static $_doctypes = array();
 	private static $_extensions = array();
+	private $_tagRegistry = array();
+	private $_nsPrefix = '';
+	public function __construct($nsPrefix) {
+		$this->_nsPrefix = $nsPrefix;
+	}
+	public function nsPrefix() {
+		return $this->_nsPrefix;
+	}
 	public function entityReferences() {
 		return '';
 	}
@@ -12,8 +20,11 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	public function decodeEntities($text) {
 		return $text;
 	}
+	protected function registerTag($tag, $class) {
+		$this->_tagRegistry[($this->_nsPrefix ? "{$this->_nsPrefix}:" : '') . $tag] = $class;
+	}
 	public function tagRegistry() {
-		return array();
+		return $this->_tagRegistry;
 	}
 	public static function ForFile($filename) {
 		$extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
@@ -30,12 +41,13 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 		}
 		return new $cls();		
 	}
-	public static function RegisterDoctype($root, $class) {
+	public static function RegisterDoctype($root, $class, $namespaceUri = '') {
 		self::$_doctypes[$root] = $class;
 	}
-	public static function RegisterFileExtension($extension, $class) {
+	public static function RegisterFileExtension($extension, $class, $namespaceUri = '') {
 		self::$_extensions[strtolower($extension)] = $class;
 	}
 }
 
-Pagemill_Doctype::RegisterDoctype('html', 'Pagemill_Doctype_Html');
+Pagemill_Doctype::RegisterDoctype('html', 'Pagemill_Doctype_Html', 'http://www.w3.org/html5/whatever');
+Pagemill_Doctype::RegisterFileExtension('html', 'Pagemill_Doctype_Html', 'http://www.w3.org/html5/whatever');

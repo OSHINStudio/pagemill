@@ -2,8 +2,8 @@
 
 class Pagemill {
 	private $_data;
-	public function __construct(Pagemill_DataNode $data = null) {
-		$this->_data = (is_null($data) ? (new Pagemill_DataNode()) : $data);
+	public function __construct(Pagemill_Data $data = null) {
+		$this->_data = (is_null($data) ? (new Pagemill_Data()) : $data);
 	}
 	public function root() {
 		return $this->_data;
@@ -40,7 +40,7 @@ class Pagemill {
 	}
 	public function writeString($source) {
 		$parser = new Pagemill_Parser();
-		$output = $parser->parse($source);
-		return $output;
+		$tree = $parser->parse($source);
+		return $tree->process($this->_data, new Pagemill_Stream());
 	}
 }

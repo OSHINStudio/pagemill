@@ -1,6 +1,10 @@
 <?php
 
 class Pagemill_Doctype_Html extends Pagemill_Doctype {
+	public function __construct($nsPrefix = '') {
+		parent::__construct($nsPrefix);
+		$this->registerTag('a', 'Pagemill_Tag');
+	}
 	public function entityReferences() {
 		static $entities = null;
 		if (is_null($entities)) {
@@ -26,9 +30,6 @@ class Pagemill_Doctype_Html extends Pagemill_Doctype {
 		
 	}
 	public function decodeEntities($text) {
-		
-	}
-	public function tagRegistry() {
 		
 	}
 }
