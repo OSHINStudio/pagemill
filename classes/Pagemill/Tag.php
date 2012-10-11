@@ -2,15 +2,14 @@
 
 class Pagemill_Tag extends Pagemill_Node {
 	private $_before = array();
-	private $_after = array();
-	private $_originalName;
-	private $_originalAttributes;
 	protected $name;
 	protected $attributes;
 	private $_children = array();
 	private $_xmlDecl = '';
 	private $_doctype = '';
 	protected $collapse = true;
+	private $_processing = false;
+	private $_header;
 	/**
 	 * Events that occur BEFORE the tag is processed receive an object with
 	 * two properties: a Pagemill_Tag and a Pagemill_Data.
@@ -26,7 +25,7 @@ class Pagemill_Tag extends Pagemill_Node {
 	 * @param string $name The name of the tag (i.e., the XML element name).
 	 * @param array $attributes The tag/element attributes.
 	 */
-	public function __construct($name, array $attributes = array(), Pagemill_Tag $parent = null, $xmlDecl = '', $doctype = '') {
+	public function __construct($name, array $attributes = array(), Pagemill_Tag $parent = null, Pagemill_Doctype $doctype = null) {
 		//$this->attach(self::EVENT_BEFORE, new Pagemill_Tag_Event_AttributeHandler());
 		$this->_originalName = $name;
 		$this->_originalAttributes = $attributes;
@@ -35,7 +34,6 @@ class Pagemill_Tag extends Pagemill_Node {
 		if ($parent) {
 			$parent->appendChild($this);
 		}
-		$this->_xmlDecl = $xmlDecl;
 		$this->_doctype = $doctype;
 	}
 	protected function attachPreprocess(Pagemill_Tag_Preprocess $preprocess) {
@@ -52,23 +50,32 @@ class Pagemill_Tag extends Pagemill_Node {
 	}
 	private function _before(Pagemill_Data $data) {
 		// Reset the tag's data for every iteration of process().
-		$this->name = $this->_originalName;
-		$this->attributes = $this->_originalAttributes;
+		//$this->name = $this->_originalName;
+		//$this->attributes = $this->_originalAttributes;
 		foreach ($this->_before as $handler) {
 			$handler->process($this, $data);
 		}
 	}
 	final public function process(Pagemill_Data $data, Pagemill_Stream $stream) {
+		// Changes made to the tag's name and attributes while processing
+		// output are temporary.
+		$cachedName = $this->name;
+		$cachedAttributes = $this->attributes;
 		if (is_null($this->parent())) {
-			if ($this->_xmlDecl) {
+			/*if ($this->_xmlDecl) {
 				$stream->append("{$this->_xmlDecl}\n");
 			}
 			if ($this->_doctype) {
 				$stream->append("{$this->_doctype}\n");
-			}
+			}*/
 		}
 		$this->_before($data);
+		if ($this->_header && !$this->parent) {
+			$stream->append(trim($this->_header) . "\n");
+		}
 		$this->output($data, $stream);
+		$this->name = $cachedName;
+		$this->attributes = $cachedAttributes;
 	}
 	protected function buildAttributeString(Pagemill_Data $data) {
 		$string = '';
@@ -106,7 +113,11 @@ class Pagemill_Tag extends Pagemill_Node {
 	 */
 	final public function appendChild(Pagemill_Node $node) {
 		if ($node->parent) {
-			throw new Exception("Appended child already has a parent");
+			if(($key = array_search($node, $node->parent->_children, true)) !== false) {
+				unset($node->parent->_children[$key]);
+			} else {
+				throw new Exception("Unable to detach child from current parent");
+			}
 		}
 		$this->_children[] = $node;
 		$node->parent = $this;
@@ -126,5 +137,14 @@ class Pagemill_Tag extends Pagemill_Node {
 	}
 	public function hasAttribute($name) {
 		return isset($this->attributes[$name]);
+	}
+	public function removeAttribute($name) {
+		unset($this->attributes[$name]);
+	}
+	public function doctype() {
+		return $this->_doctype;
+	}
+	public function header($text) {
+		$this->_header = $text;
 	}
 }

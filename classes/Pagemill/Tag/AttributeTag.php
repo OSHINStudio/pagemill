@@ -1,8 +1,8 @@
 <?php
 
-class Pagemill_Tag_Attribute extends Pagemill_Tag {
-	public function __construct($name, array $attributes = array(), Pagemill_Tag $parent = null) {
-		parent::__construct($name, $attributes, $parent);
+class Pagemill_Tag_AttributeTag extends Pagemill_Tag {
+	public function __construct($name, array $attributes = array(), Pagemill_Tag $parent = null, Pagemill_Doctype $doctype = null) {
+		parent::__construct($name, $attributes, $parent, $doctype);
 		if (is_null($this->parent())) {
 			throw new Exception('Attribute element requires a parent');
 		}

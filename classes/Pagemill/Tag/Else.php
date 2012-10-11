@@ -4,8 +4,8 @@ class Pagemill_Tag_Else extends Pagemill_Tag {
 	 * @var Pagemill_Tag_If
 	 */
 	private $_lastIf;
-	public function __construct($name, array $attributes = array(), Pagemill_Tag $parent = null) {
-		parent::__construct($name, $attributes, $parent);
+	public function __construct($name, array $attributes = array(), Pagemill_Tag $parent = null, Pagemill_Doctype $doctype = null) {
+		parent::__construct($name, $attributes, $parent, $doctype);
 		if (!$this->parent()) {
 			throw new Exception("Else tag requires parent");
 		}

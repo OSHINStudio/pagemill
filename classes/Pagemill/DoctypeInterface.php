@@ -1,8 +1,8 @@
 <?php
 
 interface Pagemill_DoctypeInterface {
-	public function entityReferences();
+	public function entities();
 	public function encodeEntities($text);
-	public function decodeEntities($text);
 	public function tagRegistry();
+	public function attributeRegistry();
 }

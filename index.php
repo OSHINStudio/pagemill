@@ -8,19 +8,41 @@ $loop[] = array('name' => 'Bob');
 $loop[] = array('name' => 'Joe');
 $pm->setVariable('people', $loop);
 $pm->setVariable('numbers', array('one', 'two', 'three'));
+
 // <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 $html = <<<EOF
-<html>
+<!DOCTYPE html>
+<html xmlns:tmpl="http://typeframe.com/pagemill">
 	<head>
 		<title>@{title}@</title>
 	</head>
 	<body>
-		<p><pm:attribute name="style">font-weight: bold;</pm:attribute>@{title}@@{body}@</p>
+		<div id="foobar"></div>
+		<p><tmpl:attribute name="style">font-weight: bold;</tmpl:attribute>@{title}@@{body}@</p>
 		<blockquote>
-			<pm:if expr="1"><a href="http://www.google.com">Google</a></pm:if><pm:else>Not true</pm:else>
+			<tmpl:if expr="1"><a href="http://www.google.com">Google</a></tmpl:if><tmpl:else>Not true</tmpl:else>
 		</blockquote>
-		<pm:loop name="people">its @{name}@ on loop @{loop_index}@<br/></pm:loop>
-		<pm:for-each name="numbers">and a @{loop_value}@<br/></pm:for-each>
+		<tmpl:for-each name="numbers">and a @{loop_value}@<br/></tmpl:for-each>
+		<ul>
+			<li tmpl:loop="people">@{name}@ in a list</li>
+		</ul>
+		<p>
+			"It's a hard-knock life."
+		</p>
+		<form>
+			<tmpl:select name="select" selected="baz">
+				<option value="foo">Foo</option>
+				<option value="bar">Bar</option>
+				<option value="baz">Baz</option>
+			</tmpl:select>
+		</form>
+		&ldquo;The count is @{count(people)}@&rdquo;
+		<tmpl:if expr="begins('USA', 'U')">Yes!</tmpl:if>
+		<tmpl:choose>
+			<tmpl:when expr="1 == 2">what</tmpl:when>
+			<tmpl:when expr="count(people) == 2">correct</tmpl:when>
+			<tmpl:otherwise>none are true</tmpl:otherwise>
+		</tmpl:choose>
 	</body>
 </html>
 EOF;

@@ -3,8 +3,8 @@
 abstract class Pagemill_Node {
 	protected $parent = null;
 	/**
-	 * 
-	 * @return Pagemill_Tag
+	 * Get the node's parent if it exists.
+	 * @return Pagemill_Tag|null
 	 */
 	public function parent() {
 		return $this->parent;

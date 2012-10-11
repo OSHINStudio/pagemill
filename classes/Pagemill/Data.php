@@ -4,6 +4,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	private $_data = array();
 	private static $_compiled = array();
 	private $_iteratorPos = -1;
+	private static $_exprFuncs = array();
 	public function __construct() {
 		
 	}
@@ -266,4 +267,68 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	public function valid() {
 		return ($this->key() !== null);
 	}
+	public static function RegisterExprFunc($names, $function, $force = false) {
+		// names must be an array so the loop below works
+		if (!is_array($names))
+			$names = array($names);
+
+		// collapse array('Class', 'Function') into 'Class::Function'
+		if (is_array($function))
+			$function = implode('::', $function);
+
+		// if function is not callable and
+		// not being forced, report error
+		if (!is_callable($function) && !$force) {
+			if (is_array($names)) {
+				$s = ((count($names) > 1) ? 's' : '');
+				$names = implode("', '", $names);
+			}
+			trigger_error("Attempted to register invalid function$s '$names' in Pagemill.");
+			return;
+		}
+
+		// function may be referenced by any of the given names
+		foreach ($names as $name)
+			self::$_exprFuncs["{$name}"] = $function;
+	}
 }
+
+// Add built-in expression functions to Pagemill_Data
+Pagemill_Data::RegisterExprFunc('abs',										'abs');
+Pagemill_Data::RegisterExprFunc('addslashes',								'addslashes');
+Pagemill_Data::RegisterExprFunc(array('ceil', 'ceiling'),					'ceil');
+Pagemill_Data::RegisterExprFunc('explode',									'explode');
+Pagemill_Data::RegisterExprFunc('floor',									'floor');
+Pagemill_Data::RegisterExprFunc('implode',									'implode');
+Pagemill_Data::RegisterExprFunc('in_array',									'in_array');
+Pagemill_Data::RegisterExprFunc('is_array',									'is_array');
+Pagemill_Data::RegisterExprFunc(array('is_bool', 'is_boolean'),				'is_bool');
+Pagemill_Data::RegisterExprFunc('is_float',									'is_float');
+Pagemill_Data::RegisterExprFunc(array('is_int', 'is_integer'),				'is_int');
+Pagemill_Data::RegisterExprFunc('is_null',									'is_null');
+Pagemill_Data::RegisterExprFunc('is_object',								'is_object');
+Pagemill_Data::RegisterExprFunc('is_scalar',								'is_scalar');
+Pagemill_Data::RegisterExprFunc('is_string',								'is_string');
+Pagemill_Data::RegisterExprFunc('nl2br',									'nl2br');
+Pagemill_Data::RegisterExprFunc(array('format_number', 'number_format'),	'number_format');
+Pagemill_Data::RegisterExprFunc('preg_replace',								'preg_replace');
+Pagemill_Data::RegisterExprFunc('rand',										'rand');
+Pagemill_Data::RegisterExprFunc('round',									'round');
+Pagemill_Data::RegisterExprFunc(array('replace', 'str_replace'),			'str_replace');
+Pagemill_Data::RegisterExprFunc('strlen',									'strlen');
+Pagemill_Data::RegisterExprFunc(array('lowercase', 'strtolower'),			'strtolower');
+Pagemill_Data::RegisterExprFunc(array('uppercase', 'strtoupper'),			'strtoupper');
+Pagemill_Data::RegisterExprFunc(array('substr', 'substring'),				'substr');
+Pagemill_Data::RegisterExprFunc('trim',										'trim');
+Pagemill_Data::RegisterExprFunc('urlencode',								'urlencode');
+Pagemill_Data::RegisterExprFunc('urldecode',								'urldecode');
+Pagemill_Data::RegisterExprFunc('begins',									'Pagemill_ExprFunc::begins');
+Pagemill_Data::RegisterExprFunc('contains',									'Pagemill_ExprFunc::contains');
+Pagemill_Data::RegisterExprFunc('count',									'Pagemill_ExprFunc::count');
+Pagemill_Data::RegisterExprFunc(array('empty', 'is_empty'),					'Pagemill_ExprFunc::is_empty');
+Pagemill_Data::RegisterExprFunc('ends',										'Pagemill_ExprFunc::ends');
+Pagemill_Data::RegisterExprFunc('format_phone',								'Pagemill_ExprFunc::format_phone');
+Pagemill_Data::RegisterExprFunc(array('date', 'format_date'),				'Pagemill_ExprFunc::format_date');
+Pagemill_Data::RegisterExprFunc('json_encode',								'Pagemill_ExprFunc::json_encode');
+Pagemill_Data::RegisterExprFunc('pluralize',								'Pagemill_ExprFunc::pluralize');
+Pagemill_Data::RegisterExprFunc('var_dump',                                 'Pagemill_ExprFunc::var_dump');
