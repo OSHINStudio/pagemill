@@ -1,5 +1,5 @@
 <?php
-
+// TODO: Deprecate this tag in favor of the pm:selected attribute.
 class Pagemill_Tag_Select extends Pagemill_Tag {
 	private $_selected;
 	public function selectedValue() {

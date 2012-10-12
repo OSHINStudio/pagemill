@@ -10,10 +10,13 @@ class Pagemill_Node_Text extends Pagemill_Node {
 	}
 	protected function output(Pagemill_Data $data, Pagemill_Stream $stream, $encode = true) {
 		if ($encode) {
-			$stream->append(htmlentities($data->parseVariables($this->_text), 0, 'UTF-8'));
+			$stream->append($this->doctype->encodeEntities($data->parseVariables($this->_text)));
 		} else {
 			$stream->append($data->parseVariables($this->_text));
 		}
+	}
+	protected function rawOutput(Pagemill_Data $data, Pagemill_Stream $stream) {
+		return $this->output($data, $stream, false);
 	}
 	public function process(Pagemill_Data $data, Pagemill_Stream $stream, $encode = true) {
 		$this->output($data, $stream, $encode);

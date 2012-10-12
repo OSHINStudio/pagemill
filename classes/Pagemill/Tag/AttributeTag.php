@@ -6,7 +6,7 @@ class Pagemill_Tag_AttributeTag extends Pagemill_Tag {
 		if (is_null($this->parent())) {
 			throw new Exception('Attribute element requires a parent');
 		}
-		$this->parent()->attachPreprocess(new Pagemill_Tag_Preprocess_Attribute($this));
+		$this->parent()->attachPreprocess(new Pagemill_TagPreprocessor_AttributeTag($this));
 	}
 	public function output(Pagemill_Data $data, Pagemill_Stream $stream) {
 		// No output for typical processing. Content should be passed to an

@@ -1,5 +1,5 @@
 <?php
-class Pagemill_Tag_Preprocess_Attribute extends Pagemill_Tag_Preprocess {
+class Pagemill_TagPreprocessor_AttributeTag extends Pagemill_TagPreprocessor {
 	private $_attributeTag;
 	public function __construct(Pagemill_Tag_AttributeTag $attributeTag) {
 		$this->_attributeTag = $attributeTag;
@@ -8,6 +8,8 @@ class Pagemill_Tag_Preprocess_Attribute extends Pagemill_Tag_Preprocess {
 		$stream = new Pagemill_Stream(true);
 		$this->_attributeTag->outputForAttribute($data, $stream);
 		$value = $stream->peek();
-		$tag->setAttribute($this->_attributeTag->getAttribute('name'), $value);
+		if ($value !== '') {
+			$tag->setAttribute($this->_attributeTag->getAttribute('name'), $value);
+		}
 	}
 }

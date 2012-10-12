@@ -29,18 +29,22 @@ class Pagemill {
 	public function sortLoop() {
 	
 	}
-	public function parseFile() {
-	
+	public function parseFile($file) {
+		$source = file_get_contents($file);
+		$tree = $this->parseString($source);
+		return $tree;
 	}
-	public function parseString() {
-	
-	}
-	public function writeFile() {
-	
-	}
-	public function writeString($source) {
+	public function parseString($source) {
 		$parser = new Pagemill_Parser();
 		$tree = $parser->parse($source);
+		return $tree;
+	}
+	public function writeFile($file) {
+		$source = file_get_contents($file);
+		return $this->writeString($source);
+	}
+	public function writeString($source) {
+		$tree = $this->parseString($source);
 		return $tree->process($this->_data, new Pagemill_Stream());
 	}
 }

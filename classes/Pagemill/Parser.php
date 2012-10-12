@@ -2,7 +2,7 @@
 
 class Pagemill_Parser {
 	private $_doctype;
-	private $_xmlParser;
+	//private $_xmlParser;
 	private $_tagStack = array();
 	//private $_tagRegistry = array();
 	private $_xmlDeclString = '';
@@ -26,6 +26,14 @@ class Pagemill_Parser {
 			}
 		}
 		return $code;
+	}
+	private function createParser() {
+		$parser = xml_parser_create('utf-8');
+		xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, 0);
+		xml_set_element_handler($parser, array($this, '_xmlStartElement'), array($this, '_xmlEndElement'));
+		//xml_set_default_handler($parser, array($this, '_xmlDefault'));
+		xml_set_character_data_handler($parser, array($this, '_xmlCharacter'));
+		return $parser;
 	}
 	/**
 	 * Parse a template string into a Tag tree.
@@ -67,18 +75,28 @@ class Pagemill_Parser {
 				$this->_doctype = Pagemill_Doctype::ForDoctype($matches[1]);
 				//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
 				//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
-				$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
+				if ($this->_doctype->entities()) {
+					$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
+				}
 			}
 		}
-		$this->_xmlParser = xml_parser_create('utf-8');
-		xml_parser_set_option($this->_xmlParser, XML_OPTION_CASE_FOLDING, 0);
-		xml_set_element_handler($this->_xmlParser, array($this, '_xmlStartElement'), array($this, '_xmlEndElement'));
-		//xml_set_default_handler($this->_xmlParser, array($this, '_xmlDefault'));
-		xml_set_character_data_handler($this->_xmlParser, array($this, '_xmlCharacter'));
-		$result = xml_parse($this->_xmlParser, $source);
+		$source = str_replace('<!--@', '<_tmplcomment><![CDATA[', $source);
+		$source = str_replace('@-->', ']]></_tmplcomment>', $source);
+		$source = str_replace('<!--', '<_comment><![CDATA[', $source);
+		$source = str_replace('-->', ']]></_comment>', $source);
+		$parser = $this->createParser();
+		$result = xml_parse($parser, $source, true);
 		if (!$result) {
-			throw new Exception(xml_error_string(xml_get_error_code($this->_xmlParser)));
+			if (xml_get_error_code($parser) == 5 && !$this->_xmlDeclString && !$this->_doctypeString) {
+				xml_parser_free($parser);
+				$parser = $this->createParser();
+				$result = xml_parse($parser, '<pm:template>' . $source . '</pm:template>', true);
+			}
 		}
+		if (!$result) {
+			throw new Exception('Error #' . xml_get_error_code($parser) . ': ' . xml_error_string(xml_get_error_code($parser)));
+		}
+		xml_parser_free($parser);
 		return $this->_root;
 	}
 	private function _declareNamespace($prefix, $uri) {

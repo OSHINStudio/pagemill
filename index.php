@@ -8,8 +8,8 @@ $loop[] = array('name' => 'Bob');
 $loop[] = array('name' => 'Joe');
 $pm->setVariable('people', $loop);
 $pm->setVariable('numbers', array('one', 'two', 'three'));
+$pm->setVariable('check', 100);
 
-// <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 $html = <<<EOF
 <!DOCTYPE html>
 <html xmlns:tmpl="http://typeframe.com/pagemill">
@@ -27,14 +27,18 @@ $html = <<<EOF
 			<li tmpl:loop="people">@{name}@ in a list</li>
 		</ul>
 		<p>
-			"It's a hard-knock life."
+			&ldquo;It's a hard-knock life.&rdquo;
 		</p>
 		<form>
-			<tmpl:select name="select" selected="baz">
+			<label><input type="radio" name="check" value="99" pm:checked="@{check}@" />99</label>
+			<label><input type="radio" name="check" value="100" pm:checked="@{check}@" />100</label>
+			<select name="select" tmpl:selected="bar">
+				<tmpl:loop name="people">
+					<option value="@{name}@">@{name}@</option>
+				</tmpl:loop>
 				<option value="foo">Foo</option>
 				<option value="bar">Bar</option>
-				<option value="baz">Baz</option>
-			</tmpl:select>
+			</select>
 		</form>
 		&ldquo;The count is @{count(people)}@&rdquo;
 		<tmpl:if expr="begins('USA', 'U')">Yes!</tmpl:if>
@@ -46,6 +50,5 @@ $html = <<<EOF
 	</body>
 </html>
 EOF;
+$html = '<div>@{check}@</div><div>Second</div><p>"@{people[0]->name}@"</p>';
 $pm->writeString($html);
-/*$stream = new Pagemill_Stream();
-echo $tree->process($pm->root(), $stream);*/

@@ -1,6 +1,9 @@
 <?php
 
 class Pagemill_Tag extends Pagemill_Node {
+	/**
+	 * @var Pagemill_TagPreprocessor[]
+	 */
 	private $_before = array();
 	protected $name;
 	protected $attributes;
@@ -36,7 +39,7 @@ class Pagemill_Tag extends Pagemill_Node {
 		}
 		$this->_doctype = $doctype;
 	}
-	protected function attachPreprocess(Pagemill_Tag_Preprocess $preprocess) {
+	public function attachPreprocess(Pagemill_TagPreprocessor $preprocess) {
 		$this->_before[] = $preprocess;
 	}
 	public function name() {
@@ -107,6 +110,23 @@ class Pagemill_Tag extends Pagemill_Node {
 			}
 		}
 	}
+	protected function rawOutput(Pagemill_Data $data, Pagemill_Stream $stream) {
+		$stream->append("<{$this->name()}");
+		$stream->append($this->buildAttributeString($data));
+		if (count($this->children())) {
+			$stream->append(">");
+			foreach ($this->children() as $child) {
+				$child->rawOutput($data, $stream);
+			}
+			$stream->append("</{$this->name()}>");
+		} else {
+			if ($this->collapse) {
+				$stream->append("/>");
+			} else {
+				$stream->append("></{$this->name()}>");
+			}
+		}
+	}
 	/**
 	 * Append a child node to the element.
 	 * @param Pagemill_Node $node
@@ -124,7 +144,7 @@ class Pagemill_Tag extends Pagemill_Node {
 	}
 	public function appendText($text) {
 		if ($text !== '') {
-			$node = new Pagemill_Node_Text();
+			$node = new Pagemill_Node_Text($this->_doctype);
 			$node->appendText($text);
 			$this->appendChild($node);
 		}
