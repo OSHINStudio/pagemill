@@ -1,209 +1,210 @@
 <?php
 
 class Pagemill_Tag_Loop extends Pagemill_Tag {
+	private $_data;
+	private $_stream;
+	private $_as;
+	private $_asKey;
+	private $_cycle;
+	private $_delimiter;
+	private $_originalData;
+	
 	public function output(Pagemill_Data $data, Pagemill_Stream $stream) {
-		// TODO: Cloning the data here to resolve scope issues.  This will
-		// require extensive testing.  See the other TODO notices later in
-		// this function.
-		//$data = clone $data;
-		$originalData = $data->getArray();
-
 		$cycle = explode(',', $data->parseVariables($this->getAttribute('cycle')));
 		$name = $data->parseVariables($this->getAttribute('name'));
 		$times = $data->parseVariables($this->getAttribute('times'));
 		$delimiter = $this->getAttribute('delimiter');
+		$loopTimes = 0;
 
-		$timeCounter = 0;
-		$actualIteration = 0;
+		// get as attribute
+		$as = $this->getAttribute('as');
+		$asKey = null;
+		if (strpos($as, ' ') !== false) {
+			list($asKey, $as) = explode(' ', $as);
+			$as = trim($as);
+			$asKey = trim($asKey);
+			if (!$as) {
+				$as = $asKey;
+				$asKey = null;
+			}
+		}
 
+		$this->_originalData = $data->getArray();
+		$this->_data = $data;
+		$this->_stream = $stream;
+		$this->_as = $as;
+		$this->_asKey = $asKey;
+		$this->_cycle = $cycle;
+		
+		
 		// if name given...
 		if ($name) {
-			// get children
-			$children = $data->get($name);
-			// if sort set and we have more than 0 children
-			if ($this->hasAttribute('sort') && (count($children) > 0)) {	   // sort and get children again
-				$sort = $data->parseVariables($this->getAttribute('sort'));
+			$children = $data->evaluate($name);
+			
+			if (is_array($children) || $children instanceof Countable) {
+				if (count($children) == 0) return;
+			}
+			
+			if (!is_array($children)) {
+				if (is_a($children, 'Pagemill_Data')) {
+					$children = $children->getArray();
+				} else if ($children instanceof ArrayObject) {
+					$children = $children->getArrayCopy();
+				} else if (!$children instanceof Iterator) {
+					throw new Exception('Unable to loop over object');
+				}
+			}
+			
+			if ($this->hasAttribute('sort')) {
+				$sort = $data->parseVariable($this->getAttribute('sort'));
+				// TODO: Figure out how to sort this thing. If it's not an
+				// array of Pagemill_Data objects, this probably won't work.
 				$data->sortNodes(array($name, $sort));
 				$children = $data->get($name);
 			}
-
-			// get as attribute
-			$as = $this->getAttribute('as');
-			$asKey = null;
-			if (strpos($as, ' ') !== false) {
-				list($asKey, $as) = explode(' ', $as);
-				$as = trim($as);
-				$asKey = trim($asKey);
-				if (!$as) {
-					$as = $asKey;
-					$asKey = null;
+			
+			if ($this->hasAttribute('limit')) {
+				// We have to do a numeric iteration.
+				$start = null;
+				$end = null;
+				$parts = explode(',', $data->parseVariables($this->getAttribute('limit')));
+				if (count($parts) == 2) {
+					$start = $parts[0];
+					$end = $parts[1];
+				} else {
+					$start = 0;
+					$end = $parts[1];
 				}
-			}
-			if (is_a($children, 'PMDataNode')) {
-				$children = $children->getArray();
-			}
-			// if we have a non-empty array of children
-			if (is_array($children) && (count($children) > 0)) {
-				// figure out start and end from limit attribute, if any
-				list($start, $end) = $this->getLimits($data, count($children));
-				// define index, actual iteration, last child, old values
-				$index = 0;
-				$lastChild = null;
-				$oldValues = array();
-
-				// count cycles; define prefix from as, if given
-				$cycles = count($cycle);
-				$keys = array_keys($children);
-				$resetNames = null;
-				$prefix = '';
-				for ($index = $start; $index < $end; $index++) {
-					//$loopData = clone $data;
-					$loopData = $data;
-					$child = $children[$keys[$index]];
-					if (is_null($resetNames)) {
-						if ($as) {
-							$resetNames = array($as);
-							if (is_a($child, 'PMDataNode')) {
-								$prefix = "{$as}->";
-							} else {
-								$prefix = '';
-							}
-							if ($asKey) {
-								$resetNames[] = $asKey;
-							}
-						} else {
-							$prefix = '';
-							if (is_a($child, 'PMDataNode')) {
-								$resetNames = array_keys($child->getArray());
-							} else {
-								$resetNames[] = 'loop_value';
-							}
-						}
-						$resetNames[] = "{$prefix}loop_index";
-						$resetNames[] = "{$prefix}loop_number";
-						$resetNames[] = "{$prefix}loop_start";
-						$resetNames[] = "{$prefix}loop_end";
-						if ($cycles) {
-							$resetNames[] = "{$prefix}cycle";
-						}
+				if (is_array($children) || $children instanceof Countable) {
+					if (count($children) < ($end - $start)) {
+						$end = count($children) - $start;
 					}
-					if ($as) {
-						/*if (is_a($child, 'PMDataNode')) {
-							$loopData->set($as, $child);
-						} else {
-							$loopData->set($as, $child);
-						}
-						if ($asKey) {
-							$loopData->set($asKey, $keys[$index]);
-						}*/
-						if (Pagemill_Data::LikeArray($loopData)) {
-							$loopData[$as] = $child;
-							if ($asKey) {
-								$loopData[$asKey] = $keys[$index];
-							}
-						} else {
-							throw new Exception("Not like an array?");
-						}
-					} else {
-						if (Pagemill_Data::LikeArray($child)) {
-							foreach ($child as $key => $value) {
-								$loopData[$key] = $value;
-							}
-						} else {
-							//throw new Exception("Not lika an array?");
-							$loopData['loop_value'] = $child;
-						}
-						/*if (is_a($child, 'Pagemill_Data')) {
-							//$loopData->merge($child);
-							$loopData = array_merge($loopData, $child);
-						} else {
-							//$loopData->set('loop_value', $child);
-							$loopData = array_merge($loopData->getArray(), $child);
-						}*/
-					}
-					// set loop index, loop number
-					$loopData->set("{$prefix}loop_index", $index);
-					$loopData->set("{$prefix}loop_number", ($index + 1));
-					$loopData->set("{$prefix}loop_start", ($index == $start));
-					$loopData->set("{$prefix}loop_end", ($index == $end - 1));
-					// set cycle
-					$loopData->set("{$prefix}cycle", $cycle[$actualIteration % $cycles]);
-					// add content to loops
-					//$loops[] = $this->inner($loopData);
-					foreach ($this->children() as $node) {
-						$node->process($loopData, $stream);
-						$stream->append($index < $end - 1 ? $delimiter : '');
-					}
-					//$stream->append($this->inner($loopData) . ($index < $end - 1 ? $delimiter : ''));
-					// reset references
-					// TODO: This might not be necessary anymore since (or IF)
-					// the data node gets cloned at the beginning of the
-					// function
-					if ($as) {
-						$data->set($as, null);
-					} else {
-						if (is_a($child, 'PMDataNode')) {
-							foreach ($child->keys() as $k)
-								$data->set($k, (isset($oldValues[$k]) ? $oldValues[$k] : null));
-						}
-					}
-					// ???
-					//$tmp = new PMDataNode($child);
-					// update child
-					$children[$keys[$index]] = $child;
-					// next!
-					++$actualIteration;
-					/*foreach ($resetNames as $n) {
-						$data->set($n, $originalData->get($n));
-					}*/
 				}
-				foreach ($resetNames as $n) {
-					$data->set($n, isset($originalData[$n]) ? $originalData[$n] : null);
+				if (is_array($children)) {
+					// TODO: for $start to $end
+					$loopTimes = $this->_forLimit($children, $start, $end);
+				} else if ($children instanceof SeekableIterator) {
+					// TODO: seek to $start and do foreach
+					$loopTimes = $this->_forEachLimit($children, $start, $end);
+				} else if ($children instanceof ArrayAccess) {
+					// TODO: for $start to $end
+					$loopTimes = $this->_forLimit($children, $start, $end);
+				} else {
+					// TODO: Iterate to lower limit and proccess through upper limit
+					$loopTimes = $this->_forEachLimit($array, $start, $end);
 				}
-				// reset times, time counter, and iterated variable
-				$times -= ($end - $start);
-				$timeCounter = $times;
-				$data->set($name, $children);
+			} else {
+				$loopTimes = $this->_forEach($children);
 			}
 		}
-
-		// if times given...
-		if ($times > 0) {	   // figure out start and end from limit attribute, if any
-			$resetNames = null;
-			list($start, $end) = $this->getLimits($data, $times);
-
-			// count cycles
-			$cycles = count($cycle);
-
-			// loop between limits
-			//for ($i = $start; $i < $end; ++$i) {	   // get old values
-			for ($i = 0; $i < $times; $i++) {
-				$resetNames = array();
-				$loopData = $data;
-				// set current values
-				$resetNames[] = 'loop_index';
-				$loopData->set('loop_index', $actualIteration);
-				$resetNames[] = 'loop_number';
-				$loopData->set('loop_number', ($actualIteration + 1));
-				// set cycle
-				if ($cycles) {
-					$resetNames[] = 'cycle';
-					$loopData->set('cycle', $cycle[$actualIteration % $cycles]);
-				}
-				// add content to loops
-				$stream->append($this->inner($loopData) . ($i < $end - 1 ? $delimiter : ''));
-				// reset values
-				//foreach ($oldValues as $key => $value)
-				//	$data->set($key, $value);
-				// next!
-				++$timeCounter;
-				++$actualIteration;
-			}
-			/*foreach ($resetNames as $name) {
-				$data->set($name, @$originalData->get($name));
-			}*/
+		if ($times) {
+			$start = $loopTimes;
+			$this->_forTimes($start, $times);
 		}
 	}
+	private function _forLimit($array, $start, $end) {
+		$loopTimes = 0;
+		for ($i = $start; $i < $end; $i++) {
+			$delimit = ($i < $end - 1);
+			$this->_processIteration($i, $array[$i], $delimit, $loopTimes);
+			$loopTimes++;
+		}
+		return $loopTimes;
+	}
+	private function _forEach($array) {
+		$loopTimes = 0;
+		$count = null;
+		if (is_array($array) || $array instanceof Countable) {
+			$count = count($array);
+		}
+		foreach ($array as $key => $value) {
+			// A foreach loop cannot delimit if the object is not countable
+			$delimit = (!is_null($count) && $count > $loopTimes + 1);
+			$this->_processIteration($key, $value, $delimit, $loopTimes);
+			$loopTimes++;
+		}
+		return $loopTimes;
+	}
+	private function _forEachLimit($array, $start, $end) {
+		if (is_null($start) && is_null($end)) {
+			return $this->_forEach($array);
+		}
+		$index = 0;
+		$loopTimes = 0;
+		foreach ($array as $key => $value) {
+			if ($index < $start && $array instanceof SeekableIterator) {
+				$array->seek($start);
+				$index = $start;
+				$key = $array->key();
+				$value = $array->current();
+			}
+			if ($index >= $start) {
+				$this->_processIteration($key, $value, $delimit, $loopTimes);
+			}
+			$index++;
+			if (!is_null($end) && $index >= $end) {
+				break;
+			}
+			$loopTimes++;
+		}
+		return $loopTimes;
+	}
+	private function _forTimes($start, $end) {
+		for ($i = $start; $i < $end; $i++) {
+			$delimit = ($i < $end - 1);
+			$this->_processIteration($i, array(), $delimit, $i);
+		}
+	}
+	private function _processIteration($key, $value, $delimit, $loopTimes) {
+		$resetKeys = array();
+		if ($this->_as) {
+			$this->_data[$this->_as] = $value;
+			$resetKeys[] = $this->_as;
+			if ($this->_cycle) {
+				if (is_array($value) || $value instanceof ArrayAccess) {
+					$this->_data[$this->_as]['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+					$this->_data[$this->_as]['loop_index'] = $loopTimes;
+				} else {
+					$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+					$resetKeys[] = 'cycle';
+					$this->_data['loop_index'] = $loopTimes;
+					$resetKeys[] = 'loop_index';
+				}
+			}
+			if ($this->_asKey) {
+				$this->_data[$this->_asKey] = $key;
+				$resetKeys[] = $this->_asKey;
+			}
+		} else {
+			if (is_array($value) || $value instanceof ArrayAccess) {
+				foreach ($value as $k => $v) {
+					$this->_data[$k]= $v;
+					$resetKeys[] = $k;
+				}
+			} else {
+				$this->_data['loop_value'] = $value;
+				$resetKeys[] = 'loop_value';
+			}
+			$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+			$resetKeys[] = 'cycle';
+			$this->_data['loop_index'] = $loopTimes;
+			$resetKeys[] = 'loop_index';
+		}
+		foreach ($this->children() as $child) {
+			$child->process($this->_data, $this->_stream);
+		}
+		if ($delimit) {
+			$this->_stream->append($this->_delimiter);
+		}
+		foreach ($resetKeys as $k) {
+			if (isset($this->_originalData[$k])) {
+				$this->_data[$k] = $this->_originalData[$k];
+			} else {
+				unset($this->_data[$k]);
+			}
+		}
+	}
+	
 	private function getLimits($data, $max)
 	{
 		if ($this->hasAttribute('limit')) {

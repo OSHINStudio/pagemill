@@ -8,7 +8,7 @@ class Pagemill_Attribute_Loop extends Pagemill_Attribute_Hidden {
 		$attributes = array();
 		$attributes['name'] = $loop;
 		if ($as) $attributes['as'] = $as;
-		$wrapper = new Pagemill_Tag_Loop('pm:loop', $attributes, null, $this->tag->doctype());
+		$wrapper = new Pagemill_Tag_Loop('loop', $attributes, null, $this->tag->doctype());
 		$wrapper->appendChild($this->tag);
 		return $wrapper;
 	}

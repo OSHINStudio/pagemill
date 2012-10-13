@@ -9,46 +9,31 @@ $loop[] = array('name' => 'Joe');
 $pm->setVariable('people', $loop);
 $pm->setVariable('numbers', array('one', 'two', 'three'));
 $pm->setVariable('check', 100);
-
+$x = new Pagemill_Data();
+$x['name'] = 'Latte';
+$x['price'] = '2.50';
+$pm->setVariable('product', $x);
 $html = <<<EOF
-<!DOCTYPE html>
-<html xmlns:tmpl="http://typeframe.com/pagemill">
+<html>
 	<head>
-		<title>@{title}@</title>
+		<title>My Page</title>
 	</head>
 	<body>
-		<div id="foobar"></div>
-		<p><tmpl:attribute name="style">font-weight: bold;</tmpl:attribute>@{title}@@{body}@</p>
-		<blockquote>
-			<tmpl:if expr="1"><a href="http://www.google.com">Google</a></tmpl:if><tmpl:else>Not true</tmpl:else>
-		</blockquote>
-		<tmpl:for-each name="numbers">and a @{loop_value}@<br/></tmpl:for-each>
-		<ul>
-			<li tmpl:loop="people">@{name}@ in a list</li>
-		</ul>
+		<p pm:loop="people person">@{person->name}@</p>
 		<p>
-			&ldquo;It's a hard-knock life.&rdquo;
+			The product is @{product->name}@ and the object is @{product}@
 		</p>
-		<form>
-			<label><input type="radio" name="check" value="99" pm:checked="@{check}@" />99</label>
-			<label><input type="radio" name="check" value="100" pm:checked="@{check}@" />100</label>
-			<select name="select" tmpl:selected="bar">
-				<tmpl:loop name="people">
-					<option value="@{name}@">@{name}@</option>
-				</tmpl:loop>
-				<option value="foo">Foo</option>
-				<option value="bar">Bar</option>
-			</select>
-		</form>
-		&ldquo;The count is @{count(people)}@&rdquo;
-		<tmpl:if expr="begins('USA', 'U')">Yes!</tmpl:if>
-		<tmpl:choose>
-			<tmpl:when expr="1 == 2">what</tmpl:when>
-			<tmpl:when expr="count(people) == 2">correct</tmpl:when>
-			<tmpl:otherwise>none are true</tmpl:otherwise>
-		</tmpl:choose>
+		<pm:loop name="product" as="key value">
+			<p>
+				@{key}@ = @{value}@
+			</p>
+		</pm:loop>
+		<pm:loop name="people" times="5" cycle="odd,even">
+			@{loop_index + 1}@. @{name}@ (@{cycle}@)<br/>
+		</pm:loop>
 	</body>
 </html>
 EOF;
-$html = '<div>@{check}@</div><div>Second</div><p>"@{people[0]->name}@"</p>';
+
 $pm->writeString($html);
+var_dump($pm->data());

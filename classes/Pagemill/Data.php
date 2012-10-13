@@ -8,23 +8,66 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	public function __construct() {
 		
 	}
+	/**
+	 * Determine if a value is an associative array (i.e., it is_array() and
+	 * its keys include non-numeric values).
+	 * @param mixed $value
+	 * @return boolean
+	 */
+	public static function IsAssoc($value) {
+		if (!is_array($value) || empty($value)) return false;
+		if (!is_int(key($value))) return true;
+		return (0 !== count(array_diff_key($value, array_keys($value))));
+	}
+	/**
+	 * Determine if a value is either an associative array (IsAssoc()) or it
+	 * is an object that can be treated like an associative array. Note that
+	 * objects which return true for LikeArray() will also return true for
+	 * LikeAssoc().
+	 * @param mixed $value
+	 * @return boolean
+	 */
+	public static function LikeAssoc($value) {
+		return (
+			(self::IsAssoc($value))
+			|| (is_a($value, 'Pagemill_Data'))
+			|| ($value instanceof ArrayAccess && $value instanceof Iterator)
+		);
+	}
+	/**
+	 * Determine if a value is either a numeric array (not IsAssoc()) or it
+	 * is an object that can be treated like a numeric array.
+	 * @param mixed $value
+	 * @return boolean
+	 */
 	public static function LikeArray($value) {
 		return (
-			(is_array($value))
+			(is_array($value) && !self::IsAssoc($value))
 			|| ($value instanceof ArrayAccess && $value instanceof Iterator && $value instanceof Countable)
 		);
 	}
 	public function set($key, $value) {
-		$this->_data[$key] = $value;
+		if (is_null($value)) {
+			unset($this->_data[$key]);
+		} else {
+			if (self::IsAssoc($value)) {
+				// Convert associative arrays into objects
+				$object = new Pagemill_Data();
+				$object->_data = $value;
+				$this->_data[$key] = $object;
+			} else {
+				$this->_data[$key] = $value;
+			}
+		}
 	}
 	public function get($key) {
 		if (!isset($this->_data[$key])) return null;
 		$value = $this->_data[$key];
-		if (is_scalar($value) || is_array($value) || self::LikeArray($value)) {
+		if (is_scalar($value) || is_array($value) || self::LikeArray($value) || self::LikeAssoc($value)) {
 			return $value;
 		}
 		die('What is this?');
-		// TODO: Make the value somethng useful
+		// TODO: Make the value something useful
 		return (isset($this->_data[$key]) ? $this->_data[$key] : null);
 	}
 	public function getArray() {
@@ -229,6 +272,17 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		foreach ($matches[0] as $index => $container) {
 			$expression = $matches[1][$index];
 			$evaluated = $this->evaluate($expression);
+			if (!is_null($evaluated) && !is_scalar($evaluated)) {
+				if (Pagemill_Data::LikeArray($evaluated)) {
+					$evaluated = '(Array)';
+				} else if (is_a($evaluated, 'Pagemill_Data')) {
+					$evaluated = '(Object)';
+				} else if (Pagemill_Data::LikeAssoc($evaluated)) {
+					$evaluated = '(Interface)';
+				} else {
+					$evaluated = '(Unknown)';
+				}
+			}
 			$result = str_replace($container, $evaluated, $result);
 		}
 		return $result;

@@ -13,12 +13,6 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 		$this->_nsPrefix = $nsPrefix;
 		$this->registerTag('_comment', 'Pagemill_Tag_Comment');
 		$this->registerTag('_tmplcomment', 'Pagemill_Tag_NoOutput');
-		/*$this->addEntityArray(array(
-			'<' => '&lt;',
-			'>' => '&gt;',
-			'"' => '&quot;',
-			"'" => '&apos;'
-		));*/
 	}
 	public function nsPrefix() {
 		return $this->_nsPrefix;
@@ -33,6 +27,10 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 		$this->_entities = array_merge($this->_entities, $array);
 	}
 	public function encodeEntities($text) {
+		// The base doctype does not have any entities that need to be declared
+		// in templates, but it should still be able to encode the internal
+		// entities that all XML parsers are required to support.
+		// TODO: Should $internal be merged with the $this->_entities array?
 		static $internal = array(
 			'<' => '&lt;',
 			'>' => '&gt;',
@@ -179,3 +177,5 @@ Pagemill_Doctype::RegisterFileExtension('htm', 'Pagemill_Doctype_Html');
 Pagemill_Doctype::RegisterFileExtension('html', 'Pagemill_Doctype_Html');
 Pagemill_Doctype::RegisterNamespaceUri('http://typeframe.com/pagemill', 'Pagemill_Doctype_Template');
 Pagemill_Doctype::RegisterDoctype('text', 'Pagemill_Doctype_Text');
+Pagemill_Doctype::RegisterFileExtension('txt', 'Pagemill_Doctype_Text');
+Pagemill_Doctype::RegisterFileExtension('csv', 'Pagemill_Doctype_Text');
