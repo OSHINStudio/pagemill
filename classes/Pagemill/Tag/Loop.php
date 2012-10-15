@@ -8,7 +8,33 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 	private $_cycle;
 	private $_delimiter;
 	private $_originalData;
+	private $_sortKey;
 	
+	/**
+	 * The sort callback.
+	 */
+	private function _cmp($a, $b) {
+		// convert sort key into trimmed array of arguments
+		foreach (array_map('trim', explode(',', $this->_sortKey)) as $arg) {
+			// set key and direction from arg
+			list($key, $dir) = (is_int(strpos($arg, ' ')) ?
+							explode(' ', $arg) :
+							array($arg, ''));
+			// set resulting direction
+			$result = (('desc' == strtolower($dir)) ? -1 : 1);
+			// get values from a and b using key
+			$ak = $a[$key];
+			$bk = $b[$key];
+			// a is less than b
+			if ($ak < $bk)
+				return -$result;
+			// a is greater than b
+			if ($ak > $bk)
+				return $result;
+		}
+		// a and b are equal
+		return 0;
+	}
 	public function output(Pagemill_Data $data, Pagemill_Stream $stream) {
 		$cycle = explode(',', $data->parseVariables($this->getAttribute('cycle')));
 		$name = $data->parseVariables($this->getAttribute('name'));
@@ -39,12 +65,12 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		
 		// if name given...
 		if ($name) {
-			$children = $data->evaluate($name);
+			$children = $data->get($name);
 			
+			if (is_null($children)) return;
 			if (is_array($children) || $children instanceof Countable) {
 				if (count($children) == 0) return;
 			}
-			
 			if (!is_array($children)) {
 				if (is_a($children, 'Pagemill_Data')) {
 					$children = $children->getArray();
@@ -56,11 +82,19 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			}
 			
 			if ($this->hasAttribute('sort')) {
-				$sort = $data->parseVariable($this->getAttribute('sort'));
-				// TODO: Figure out how to sort this thing. If it's not an
-				// array of Pagemill_Data objects, this probably won't work.
-				$data->sortNodes(array($name, $sort));
-				$children = $data->get($name);
+				$sort = $data->parseVariables($this->getAttribute('sort'));
+				if (!is_array($children)) {
+					$array = array();
+					foreach ($children as $key => $value) {
+						$array[$key] = $value;
+					}
+					$children = $array;
+					// Replace the object with the array so we don't have to
+					// convert it again later
+					$data->set($name, $children);
+				}
+				$this->_sortKey = $sort;
+				usort($children, array($this, '_cmp'));
 			}
 			
 			if ($this->hasAttribute('limit')) {
@@ -81,16 +115,16 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 					}
 				}
 				if (is_array($children)) {
-					// TODO: for $start to $end
+					// for $start to $end
 					$loopTimes = $this->_forLimit($children, $start, $end);
 				} else if ($children instanceof SeekableIterator) {
-					// TODO: seek to $start and do foreach
+					// seek to $start and do foreach
 					$loopTimes = $this->_forEachLimit($children, $start, $end);
 				} else if ($children instanceof ArrayAccess) {
-					// TODO: for $start to $end
+					// for $start to $end
 					$loopTimes = $this->_forLimit($children, $start, $end);
 				} else {
-					// TODO: Iterate to lower limit and proccess through upper limit
+					// iterate to lower limit and proccess through upper limit
 					$loopTimes = $this->_forEachLimit($array, $start, $end);
 				}
 			} else {
@@ -152,7 +186,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 	private function _forTimes($start, $end) {
 		for ($i = $start; $i < $end; $i++) {
 			$delimit = ($i < $end - 1);
-			$this->_processIteration($i, array(), $delimit, $i);
+			$this->_processIteration($i, $this->_data, $delimit, $i);
 		}
 	}
 	private function _processIteration($key, $value, $delimit, $loopTimes) {
@@ -160,16 +194,14 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		if ($this->_as) {
 			$this->_data[$this->_as] = $value;
 			$resetKeys[] = $this->_as;
-			if ($this->_cycle) {
-				if (is_array($value) || $value instanceof ArrayAccess) {
-					$this->_data[$this->_as]['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-					$this->_data[$this->_as]['loop_index'] = $loopTimes;
-				} else {
-					$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-					$resetKeys[] = 'cycle';
-					$this->_data['loop_index'] = $loopTimes;
-					$resetKeys[] = 'loop_index';
-				}
+			if (is_array($value) || $value instanceof ArrayAccess) {
+				if ($this->_cycle) $this->_data[$this->_as]['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+				$this->_data[$this->_as]['loop_index'] = $loopTimes;
+			} else {
+				if ($this->_cycle) $this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+				$resetKeys[] = 'cycle';
+				$this->_data['loop_index'] = $loopTimes;
+				$resetKeys[] = 'loop_index';
 			}
 			if ($this->_asKey) {
 				$this->_data[$this->_asKey] = $key;
@@ -203,26 +235,5 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				unset($this->_data[$k]);
 			}
 		}
-	}
-	
-	private function getLimits($data, $max)
-	{
-		if ($this->hasAttribute('limit')) {
-			$limits = explode(',', $data->parseVariables($this->getAttribute('limit')));
-			if (count($limits) > 1) {
-				$start = $limits[0];
-				$end = ($start + $limits[1]);
-			} else {
-				$start = 0;
-				$end = $limits[0];
-			}
-			if ($end > $max) {
-				$end = $max;
-			}
-		} else {
-			$start = 0;
-			$end = $max;
-		}
-		return array($start, $end);
-	}
+	}	
 }

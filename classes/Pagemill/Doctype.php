@@ -7,6 +7,7 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	private $_tagRegistry = array();
 	private $_attributeRegistry = array();
 	private $_entities = array();
+	private static $_templateDoctypeClass = 'Pagemill_Doctype_Template';
 	protected $keepNamespaceDeclarationInOutput = true;
 	private $_nsPrefix = '';
 	public function __construct($nsPrefix) {
@@ -161,6 +162,14 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	public static function RegisterNamespaceUri($uri, $class) {
 		self::$_namespaceUris[$uri] = $class;
 	}
+	public static function SetTemplateDoctypeClass($classname) {
+		self::$_templateDoctypeClass = $classname;
+		Pagemill_Doctype::RegisterNamespaceUri('http://typeframe.com/pagemill', $classname);
+	}
+	public static function GetTemplateDoctype($nsPrefix) {
+		$cls = self::$_templateDoctypeClass;
+		return new $cls($nsPrefix);
+	}
 	/**
 	 * If the doctype was called from a namespace declaration, the Parser uses
 	 * this value to determine whether to keep the declaration in the generated
@@ -172,6 +181,7 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	}
 }
 
+// Common Doctypes
 Pagemill_Doctype::RegisterDoctype('html', 'Pagemill_Doctype_Html');
 Pagemill_Doctype::RegisterFileExtension('htm', 'Pagemill_Doctype_Html');
 Pagemill_Doctype::RegisterFileExtension('html', 'Pagemill_Doctype_Html');

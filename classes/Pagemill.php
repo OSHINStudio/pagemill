@@ -29,21 +29,56 @@ class Pagemill {
 	public function sortLoop() {
 	
 	}
+	/**
+	 * Parse a template file into a tag tree for processing.
+	 * @param string $file The filename.
+	 * @return Pagemill_Tag
+	 */
 	public function parseFile($file) {
+		if (defined('PAGEMILL_CACHE_DIR')) {
+			$md5 = md5($file);
+			$cacheFile = PAGEMILL_CACHE_DIR . "/{$md5}";
+			if (file_exists($cacheFile)) {
+				$cacheTime = filemtime($cacheFile);
+				$tmplTime = filemtime($file);
+				if ($tmplTime < $cacheTime) {
+					$serial = file_get_contents($cacheFile);
+					return unserialize($serial);
+				}
+			}
+		}
 		$source = file_get_contents($file);
-		$tree = $this->parseString($source);
+		$doctype = Pagemill_Doctype::ForFile($file);
+		$tree = $this->parseString($source, $doctype);
+		if (defined('PAGEMILL_CACHE_DIR')) {
+			$serial = serialize($tree);
+			file_put_contents($cacheFile, $serial);
+		}
 		return $tree;
 	}
-	public function parseString($source) {
+	/**
+	 * Parse a template string into a tag tree for processing.
+	 * @param string $source
+	 * @return Pagemill_Tag
+	 */
+	public function parseString($source, Pagemill_Doctype $doctype = null) {
 		$parser = new Pagemill_Parser();
-		$tree = $parser->parse($source);
+		$tree = $parser->parse($source, $doctype);
 		return $tree;
 	}
+	/**
+	 * Process a template file and send it to output.
+	 * @param string $file The filename.
+	 */
 	public function writeFile($file) {
-		$source = file_get_contents($file);
-		return $this->writeString($source);
+		$tree = $this->parseFile($file);
+		return $tree->process($this->_data, new Pagemill_Stream());
 	}
-	public function writeString($source) {
+	/**
+	 * Process a template string and send it to output.
+	 * @param string $source
+	 */
+	public function writeString($source, Pagemill_Doctype $doctype = null) {
 		$tree = $this->parseString($source);
 		return $tree->process($this->_data, new Pagemill_Stream());
 	}

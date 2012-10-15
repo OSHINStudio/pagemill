@@ -1,10 +1,13 @@
 <?php
-
+/**
+ * Pagemill data container
+ */
 class Pagemill_Data implements ArrayAccess, Iterator {
 	private $_data = array();
 	private static $_compiled = array();
 	private $_iteratorPos = -1;
 	private static $_exprFuncs = array();
+	private static $_classHandlers = array();
 	public function __construct() {
 		
 	}
@@ -63,12 +66,22 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	public function get($key) {
 		if (!isset($this->_data[$key])) return null;
 		$value = $this->_data[$key];
-		if (is_scalar($value) || is_array($value) || self::LikeArray($value) || self::LikeAssoc($value)) {
-			return $value;
+		$ok = false;
+		if (is_null($value) || is_scalar($value) || is_array($value) || is_a($value, 'Pagemill_Data') || self::LikeArray($value) || self::LikeAssoc($value)) {
+			$ok = true;
 		}
-		die('What is this?');
-		// TODO: Make the value something useful
-		return (isset($this->_data[$key]) ? $this->_data[$key] : null);
+		if (is_object($value)) {
+			if (isset(self::$_classHandlers[get_class($value)])) {
+				$func = self::$_classHandlers[get_class($value)];
+				$value = call_user_func($func, $value);
+				$this->_data[$key] = $value;
+				$ok = true;
+			}
+		}
+		if (!$ok) {
+			throw new Exception("Unable to process object of type " . get_class($value));
+		}
+		return $value;
 	}
 	public function getArray() {
 		return $this->_data;
@@ -344,6 +357,89 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		// function may be referenced by any of the given names
 		foreach ($names as $name)
 			self::$_exprFuncs["{$name}"] = $function;
+	}
+	/**
+	 * The sort callback for the sortNode() function.
+	 */
+	private function _cmp($a, $b) {
+		// convert sort key into trimmed array of arguments
+		foreach (array_map('trim', explode(',', $this->_sortKey)) as $arg) {	   // set key and direction from arg
+			list($key, $dir) = (is_int(strpos($arg, ' ')) ?
+							explode(' ', $arg) :
+							array($arg, ''));
+			// set resulting direction
+			$result = (('desc' == strtolower($dir)) ? -1 : 1);
+			// get values from a and b using key
+			$ak = $a[$key];
+			$bk = $b[$key];
+			// a is less than b
+			if ($ak < $bk)
+				return -$result;
+			// a is greater than b
+			if ($ak > $bk)
+				return $result;
+		}
+		// a and b are equal
+		return 0;
+	}
+	/**
+	 * Sort arrays according by the designated keys
+	 * @param string $name,... The name of the array or the path to multiple arrays (e.g.: 'parents', 'children')
+	 * @param string $sort The sorting rules.  Multiple keys and ASC/DESC keywords are permitted (e.g., 'lastname, firstname' or 'birthday DESC')
+	 */
+	public function sortNodes(array $args) {
+		if (count($args) < 2) {
+			trigger_error('Pagemill_Data->sortNodes() requires an array with at least 2 elements');
+			return;
+		}
+		// with two elements
+		if (2 == count($args)) {	   // get key and value
+			$key = $args[0];
+			$value = $this->get($key);
+			// stop if value is not an array
+			if (!is_array($value)) {
+				if ($value instanceof Iterator) {
+					// We can try to convert into an array
+					$array = array();
+					foreach ($value as $k => $v) {
+						$array[$k] = $v;
+					}
+					$value = $array;
+				} else {
+					/*trigger_error("Could not find '$key' to sort.");*/
+					return;
+				}
+			}
+			if (strtolower($args[1]) == 'rand()') {
+				shuffle($value);
+			} else {
+				$this->_sortKey = $args[1];
+				usort($value, array($this, '_cmp'));
+			}
+			$this->set($key, $value);
+		} else {
+			// with more than two elements
+			// get key and value
+			$key = array_shift($args);
+			$value = $this->get($key);
+			// stop if value is not an array
+			if (!is_array($value)) {
+				trigger_error("Could not find '$key' to sort.");
+				return;
+			}
+			// sort each node separately
+			foreach ($value as $node)
+				$node->sortNodes($args);
+		}
+	}
+	/**
+	 * Declare a function that casts objects of the specified class
+	 * into a type that can be processed in Pagemill_Data.
+	 * @param string $class
+	 * @param mixed $function
+	 */
+	public static function ClassHandler($class, $function) {
+		self::$_classHandlers[$class] = $function;
 	}
 }
 

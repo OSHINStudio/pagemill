@@ -11,8 +11,6 @@ class Pagemill_Doctype_Template extends Pagemill_Doctype {
 		$this->registerTag('for-each', 'Pagemill_Tag_Loop');
 		$this->registerTag('if', 'Pagemill_Tag_If');
 		$this->registerTag('else', 'Pagemill_Tag_Else');
-		$this->registerTag('select', 'Pagemill_Tag_Select');	// TODO: Deprecate
-		$this->registerTag('/option', 'Pagemill_Tag_Option');	// TODO: Deprecate
 		$this->registerTag('choose', 'Pagemill_Tag_Choose');
 		$this->registerTag('include', 'Pagemill_Tag_Include');
 		
@@ -20,5 +18,6 @@ class Pagemill_Doctype_Template extends Pagemill_Doctype {
 		$this->registerAttribute('for-each', 'Pagemill_Attribute_Loop');
 		$this->registerAttribute('checked', 'Pagemill_Attribute_Checked');
 		$this->registerAttribute('selected', 'Pagemill_Attribute_Selected');
+		$this->registerAttribute('if', 'Pagemill_Attribute_If');
 	}
 }

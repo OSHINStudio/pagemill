@@ -8,7 +8,4 @@ class Pagemill_Attribute implements Pagemill_AttributeInterface {
 		$this->value    = $value;
 		$this->tag      = $tag;
 	}
-	public function tag() {
-		return $this->tag;
-	}
 }

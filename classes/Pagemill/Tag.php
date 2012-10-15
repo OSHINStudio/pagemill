@@ -8,10 +8,8 @@ class Pagemill_Tag extends Pagemill_Node {
 	protected $name;
 	protected $attributes;
 	private $_children = array();
-	private $_xmlDecl = '';
 	private $_doctype = '';
 	protected $collapse = true;
-	private $_processing = false;
 	private $_header;
 	/**
 	 * Events that occur BEFORE the tag is processed receive an object with
@@ -51,39 +49,39 @@ class Pagemill_Tag extends Pagemill_Node {
 	public function children() {
 		return $this->_children;
 	}
-	private function _before(Pagemill_Data $data) {
-		// Reset the tag's data for every iteration of process().
-		//$this->name = $this->_originalName;
-		//$this->attributes = $this->_originalAttributes;
-		foreach ($this->_before as $handler) {
-			$handler->process($this, $data);
+	private function _before(Pagemill_Data $data, Pagemill_Stream $stream) {
+		$final = true;
+		while (count($this->_before) > 0) {
+			$handler = array_shift($this->_before);
+			if ($handler->process($this, $data, $stream) === false) {
+				$final = false;
+				break;
+			}
 		}
+		return $final;
 	}
 	final public function process(Pagemill_Data $data, Pagemill_Stream $stream) {
 		// Changes made to the tag's name and attributes while processing
 		// output are temporary.
 		$cachedName = $this->name;
 		$cachedAttributes = $this->attributes;
-		if (is_null($this->parent())) {
-			/*if ($this->_xmlDecl) {
-				$stream->append("{$this->_xmlDecl}\n");
+		$cachedBefore = $this->_before;
+		$result = $this->_before($data, $stream);
+		if ($result !== false) {
+			if ($this->_header && !$this->parent) {
+				$stream->append(trim($this->_header) . "\n");
 			}
-			if ($this->_doctype) {
-				$stream->append("{$this->_doctype}\n");
-			}*/
+			$this->output($data, $stream);
 		}
-		$this->_before($data);
-		if ($this->_header && !$this->parent) {
-			$stream->append(trim($this->_header) . "\n");
-		}
-		$this->output($data, $stream);
+		// Reset the tag's data for every iteration of process().
 		$this->name = $cachedName;
 		$this->attributes = $cachedAttributes;
+		$this->_before = $cachedBefore;
 	}
 	protected function buildAttributeString(Pagemill_Data $data) {
 		$string = '';
 		foreach ($this->attributes as $key => $value) {
-			$string .= ' ' . $key . '="' . htmlentities($value) . '"';
+			$string .= ' ' . $key . '="' . $this->doctype()->encodeEntities($data->parseVariables($value)) . '"';
 		}
 		return $string;
 	}
@@ -141,6 +139,17 @@ class Pagemill_Tag extends Pagemill_Node {
 		}
 		$this->_children[] = $node;
 		$node->parent = $this;
+	}
+	final public function detach() {
+		if ($this->parent) {
+			$index = array_search($this, $this->parent->_children, true);
+			if ($index !== false) {
+				unset($this->parent->_children[$index]);
+				$this->parent = null;
+			} else {
+				throw new Exception("Parent/child relationship is dodgy");
+			}
+		}
 	}
 	public function appendText($text) {
 		if ($text !== '') {

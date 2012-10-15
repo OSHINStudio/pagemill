@@ -31,7 +31,6 @@ class Pagemill_Parser {
 		$parser = xml_parser_create('utf-8');
 		xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, 0);
 		xml_set_element_handler($parser, array($this, '_xmlStartElement'), array($this, '_xmlEndElement'));
-		//xml_set_default_handler($parser, array($this, '_xmlDefault'));
 		xml_set_character_data_handler($parser, array($this, '_xmlCharacter'));
 		return $parser;
 	}
@@ -54,10 +53,12 @@ class Pagemill_Parser {
 		if (preg_match('/^<\?xml ([\w\W\s\S]*?)\?>/', $source, $matches)) {
 			$xmlDecl = $matches[0];
 			$this->_xmlDeclString = $xmlDecl;
+			$source = substr($source, strlen($xmlDecl));
 		}
+		$doctypeWithEntities = '';
 		// Check for a doctype
 		$doctypeFromSource = '';
-		if (preg_match('/^[\s\S]*?<\!DOCTYPE +([\w\W\s\S]*?)>/', substr($source, strlen($xmlDecl)), $matches)) {
+		if (preg_match('/^[\s\S]*?<\!DOCTYPE +([\w\W\s\S]*?)>/', $source, $matches)) {
 			$this->_doctypeString = trim($matches[0]);
 			$parts = explode(' ', trim($matches[1]));
 			$doctypeFromSource = trim($parts[0]);
@@ -65,10 +66,10 @@ class Pagemill_Parser {
 			//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
 			//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
 			if (strpos($this->_doctypeString, '[') === false) {
-				$source = substr($source, 0, strlen($xmlDecl . $matches[0]) - 1) . "[\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl . $matches[0]));
+				$source = substr($source, 0, strlen($matches[0]) - 1) . " [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($matches[0]));
 			}
 		}
-		if (!$doctypeFromSource) {
+		if (!$doctypeFromSource && get_class($this->_doctype) == 'Pagemill_Doctype') {
 			// No doctype detected. Try the root element
 			if (preg_match('/<([a-z0-9\-_]+)/i', $source, $matches)) {
 				$doctype = $matches[1];
@@ -76,8 +77,16 @@ class Pagemill_Parser {
 				//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
 				//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
 				if ($this->_doctype->entities()) {
-					$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
+					$doctypeWithEntities = "<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
 				}
+				//if ($this->_doctype->entities()) {
+				//	$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
+				//}
+			}
+		} else if (!$doctypeFromSource) {
+			if ($this->_doctype->entities()) {
+				$doctypeWithEntities = "<!DOCTYPE root [\n" . $this->_entityReferences($this->_doctype->entities()) . "]>\n";
+				//$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE _root_ [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
 			}
 		}
 		$source = str_replace('<!--@', '<_tmplcomment><![CDATA[', $source);
@@ -85,12 +94,13 @@ class Pagemill_Parser {
 		$source = str_replace('<!--', '<_comment><![CDATA[', $source);
 		$source = str_replace('-->', ']]></_comment>', $source);
 		$parser = $this->createParser();
-		$result = xml_parse($parser, $source, true);
+		$result = xml_parse($parser, $doctypeWithEntities . $source, true);
 		if (!$result) {
-			if (xml_get_error_code($parser) == 5 && !$this->_xmlDeclString && !$this->_doctypeString) {
+			$ec = xml_get_error_code($parser);
+			if (($ec == 4 || $ec == 5) && !$this->_xmlDeclString && !$this->_doctypeString) {
 				xml_parser_free($parser);
 				$parser = $this->createParser();
-				$result = xml_parse($parser, '<pm:template>' . $source . '</pm:template>', true);
+				$result = xml_parse($parser, $doctypeWithEntities . '<pm:template>' . $source . '</pm:template>', true);
 			}
 		}
 		if (!$result) {
@@ -121,12 +131,6 @@ class Pagemill_Parser {
 		} else {
 			$currentDoctype = $this->_doctype;
 		}
-		if (substr($name, 0, 3) == 'pm:' && !isset($this->_namespaces['pm'])) {
-			// Declare the Template doctype using the default pm prefix
-			$this->_namespaces['pm'] = 'http://typeframe.com/pagemill';
-			$pm = new Pagemill_Doctype_Template('pm');
-			$currentDoctype->merge($pm);
-		}
 		foreach ($attributes as $k => $v) {
 			if ($k == 'xmlns' || substr($k, 0, 6) == 'xmlns:') {
 				$result = $this->_declareNamespace(substr($k, 6), $v);
@@ -137,9 +141,15 @@ class Pagemill_Parser {
 			} else if (substr($k, 0, 3) == 'pm:' && !isset($this->_namespaces['pm'])) {
 				// Declare the Template doctype using the default pm prefix
 				$this->_namespaces['pm'] = 'http://typeframe.com/pagemill';
-				$pm = new Pagemill_Doctype_Template('pm');
+				$pm = Pagemill_Doctype::GetTemplateDoctype('pm');
 				$currentDoctype->merge($pm);
 			}
+		}
+		if (substr($name, 0, 3) == 'pm:' && !isset($this->_namespaces['pm'])) {
+			// Declare the Template doctype using the default pm prefix
+			$this->_namespaces['pm'] = 'http://typeframe.com/pagemill';
+			$pm = Pagemill_Doctype::GetTemplateDoctype('pm');
+			$currentDoctype->merge($pm);
 		}
 		$tagRegistry = $currentDoctype->tagRegistry();
 		if (isset($tagRegistry[$name])) {
@@ -160,24 +170,15 @@ class Pagemill_Parser {
 		$last->appendText($this->_currentCharacterData);
 		$this->_currentCharacterData = '';
 		$attributeRegistry = $last->doctype()->attributeRegistry();
-		foreach (array_reverse($last->attributes()) as $k => $v) {
+		foreach ($last->attributes() as $k => $v) {
 			if (isset($attributeRegistry[$k])) {
 				$cls = $attributeRegistry[$k];
-				// TODO: What about the doctype and the template? Probably
-				// don't need them if they're in the tag, right?
 				$attribute = new $cls($k, $v, $last);
-				$last = $attribute->tag();
-				if (count($this->_tagStack)) {
-					$this->_tagStack[count($this->_tagStack) - 1]->appendChild($last);
-				}
 			}
 		}
 		if (!count($this->_tagStack)) {
 			$this->_root = $last;
 		}
-	}
-	private function _xmlDefault($parser, $data) {
-		$this->_currentCharacterData .= $data;
 	}
 	private function _xmlCharacter($parser, $data) {
 		$this->_currentCharacterData .= $data;
