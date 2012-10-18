@@ -18,12 +18,15 @@ class Pagemill_Stream {
 	 * Add a string to the stream.
 	 * @param string $string
 	 */
-	public function append($string) {
+	public function puts($string) {
 		if ($this->_buffer) {
 			$this->_content .= $string;
 		} else {
 			echo $string;
 		}
+	}
+	public function append($string) {
+		$this->puts($string);
 	}
 	/**
 	 * Get the current content in the buffer. This method will not send the

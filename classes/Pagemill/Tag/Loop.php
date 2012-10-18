@@ -1,6 +1,7 @@
 <?php
 
 class Pagemill_Tag_Loop extends Pagemill_Tag {
+	private $_name;
 	private $_data;
 	private $_stream;
 	private $_as;
@@ -58,6 +59,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			}
 		}
 
+		$this->_name = $name;
 		$this->_originalData = $data->getArray();
 		$this->_data = $data;
 		$this->_stream = $stream;
@@ -193,6 +195,8 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 	}
 	private function _processIteration($key, $value, $delimit, $loopTimes) {
 		$resetKeys = array();
+		$this->_data[$this->_name] = null;
+		$resetKeys[] = $this->_name;
 		if ($this->_as) {
 			$this->_data[$this->_as] = $value;
 			$resetKeys[] = $this->_as;

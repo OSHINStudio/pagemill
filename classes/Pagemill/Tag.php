@@ -77,7 +77,7 @@ class Pagemill_Tag extends Pagemill_Node {
 		$result = $this->_before($data, $stream);
 		if ($result !== false) {
 			if ($this->_header && !$this->parent) {
-				$stream->append(trim($this->_header) . "\n");
+				$stream->puts(trim($this->_header) . "\n");
 			}
 			$this->output($data, $stream);
 		}
@@ -101,36 +101,36 @@ class Pagemill_Tag extends Pagemill_Node {
 	 * @return string
 	 */
 	protected function output(Pagemill_Data $data, Pagemill_Stream $stream) {
-		$stream->append("<{$this->name()}");
-		$stream->append($this->buildAttributeString($data));
+		$stream->puts("<{$this->name()}");
+		$stream->puts($this->buildAttributeString($data));
 		if (count($this->children())) {
-			$stream->append(">");
+			$stream->puts(">");
 			foreach ($this->children() as $child) {
 				$child->process($data, $stream);
 			}
-			$stream->append("</{$this->name()}>");
+			$stream->puts("</{$this->name()}>");
 		} else {
 			if ($this->collapse) {
-				$stream->append("/>");
+				$stream->puts("/>");
 			} else {
-				$stream->append("></{$this->name()}>");
+				$stream->puts("></{$this->name()}>");
 			}
 		}
 	}
 	protected function rawOutput(Pagemill_Data $data, Pagemill_Stream $stream) {
-		$stream->append("<{$this->name()}");
-		$stream->append($this->buildAttributeString($data));
+		$stream->puts("<{$this->name()}");
+		$stream->puts($this->buildAttributeString($data));
 		if (count($this->children())) {
-			$stream->append(">");
+			$stream->puts(">");
 			foreach ($this->children() as $child) {
 				$child->rawOutput($data, $stream);
 			}
-			$stream->append("</{$this->name()}>");
+			$stream->puts("</{$this->name()}>");
 		} else {
 			if ($this->collapse) {
-				$stream->append("/>");
+				$stream->puts("/>");
 			} else {
-				$stream->append("></{$this->name()}>");
+				$stream->puts("></{$this->name()}>");
 			}
 		}
 	}
