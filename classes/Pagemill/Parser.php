@@ -105,10 +105,11 @@ class Pagemill_Parser {
 		if (!$result) {
 			$ec = xml_get_error_code($parser);
 			if (($ec == 4 || $ec == 5) && !$this->_xmlDeclString && !$this->_doctypeString) {
+				$this->_namespaces = array();
 				xml_parser_free($parser);
 				$parser = $this->createParser();
-				$result = xml_parse($parser, $doctypeWithEntities . '<pm:template xmlns:pm="http://typeframe.com/pagemill">' . $source . '</pm:template>', true);
 				$ignoreBytes = strlen('<pm:template xmlns:pm="http://typeframe.com/pagemill">');
+				$result = xml_parse($parser, $doctypeWithEntities . '<pm:template xmlns:pm="http://typeframe.com/pagemill">' . $source . '</pm:template>', true);
 			}
 		}
 		if (!$result) {
