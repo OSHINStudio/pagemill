@@ -18,4 +18,7 @@ abstract class Pagemill_Node {
 	abstract protected function output(Pagemill_Data $data, Pagemill_Stream $stream);
 	abstract protected function rawOutput(Pagemill_Data $data, Pagemill_Stream $stream);
 	abstract public function process(Pagemill_Data $data, Pagemill_Stream $stream);
+	public function __clone() {
+		$this->parent = null;
+	}
 }

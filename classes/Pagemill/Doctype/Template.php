@@ -13,7 +13,8 @@ class Pagemill_Doctype_Template extends Pagemill_Doctype {
 		$this->registerTag('else', 'Pagemill_Tag_Else');
 		$this->registerTag('choose', 'Pagemill_Tag_Choose');
 		$this->registerTag('include', 'Pagemill_Tag_Include');
-		
+		$this->registerTag('recurse', 'Pagemill_Tag_Recurse');
+
 		$this->registerAttribute('loop', 'Pagemill_Attribute_Loop');
 		$this->registerAttribute('for-each', 'Pagemill_Attribute_Loop');
 		$this->registerAttribute('checked', 'Pagemill_Attribute_Checked');

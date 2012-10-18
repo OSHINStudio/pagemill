@@ -11,6 +11,10 @@ class Pagemill_Tag extends Pagemill_Node {
 	private $_doctype = '';
 	protected $collapse = true;
 	private $_header;
+	private $_cachedName;
+	private $_cachedAttributes;
+	private $_cachedBefore;
+	private $_processing = false;
 	/**
 	 * Events that occur BEFORE the tag is processed receive an object with
 	 * two properties: a Pagemill_Tag and a Pagemill_Data.
@@ -40,7 +44,10 @@ class Pagemill_Tag extends Pagemill_Node {
 	public function attachPreprocess(Pagemill_TagPreprocessor $preprocess) {
 		$this->_before[] = $preprocess;
 	}
-	public function name() {
+	public function name($withPrefix = true) {
+		if ( (!$withPrefix) && ($index = strpos($this->name, ':')) !== false ) {
+			return substr($this->name, $index + 1);
+		}
 		return $this->name;
 	}
 	public function attributes() {
@@ -63,9 +70,10 @@ class Pagemill_Tag extends Pagemill_Node {
 	final public function process(Pagemill_Data $data, Pagemill_Stream $stream) {
 		// Changes made to the tag's name and attributes while processing
 		// output are temporary.
-		$cachedName = $this->name;
-		$cachedAttributes = $this->attributes;
-		$cachedBefore = $this->_before;
+		$this->_cachedName = $this->name;
+		$this->_cachedAttributes = $this->attributes;
+		$this->_cachedBefore = $this->_before;
+		$this->_processing = true;
 		$result = $this->_before($data, $stream);
 		if ($result !== false) {
 			if ($this->_header && !$this->parent) {
@@ -74,9 +82,10 @@ class Pagemill_Tag extends Pagemill_Node {
 			$this->output($data, $stream);
 		}
 		// Reset the tag's data for every iteration of process().
-		$this->name = $cachedName;
-		$this->attributes = $cachedAttributes;
-		$this->_before = $cachedBefore;
+		$this->name = $this->_cachedName;
+		$this->attributes = $this->_cachedAttributes;
+		$this->_before = $this->_cachedBefore;
+		$this->_processing = false;
 	}
 	protected function buildAttributeString(Pagemill_Data $data) {
 		$string = '';
@@ -175,5 +184,22 @@ class Pagemill_Tag extends Pagemill_Node {
 	}
 	public function header($text) {
 		$this->_header = $text;
+	}
+	public function __clone() {
+		parent::__clone();
+		if ($this->_processing) {
+			$this->name = $this->_cachedName;
+			$this->attributes = $this->_cachedAttributes;
+			$this->_before = $this->_cachedBefore;
+			$this->_processing = false;
+		}		
+		$clonedChildren = array();
+		foreach ($this->_children as $child) {
+			$clonedChildren[] = clone $child;
+		}
+		$this->_children = array();
+		foreach ($clonedChildren as $child) {
+			$this->appendChild($child);
+		}
 	}
 }

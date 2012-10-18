@@ -50,6 +50,8 @@ class Pagemill_Parser {
 		// Check for an XML declaration
 		$xmlDecl = '';
 		$source = trim($source);
+		$ignoreLines = 0;
+		$ignoreBytes = 0;
 		if (preg_match('/^<\?xml ([\w\W\s\S]*?)\?>/', $source, $matches)) {
 			$xmlDecl = $matches[0];
 			$this->_xmlDeclString = $xmlDecl;
@@ -66,7 +68,10 @@ class Pagemill_Parser {
 			//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
 			//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
 			if (strpos($this->_doctypeString, '[') === false) {
-				$source = substr($source, 0, strlen($matches[0]) - 1) . " [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($matches[0]));
+				$ents = " [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
+				$source = substr($source, 0, strlen($matches[0]) - 1) . $ents . substr($source, strlen($matches[0]));
+				$ignoreLines = 3;
+				$ignoreBytes = strlen($ents);
 			}
 		}
 		if (!$doctypeFromSource && get_class($this->_doctype) == 'Pagemill_Doctype') {
@@ -78,6 +83,7 @@ class Pagemill_Parser {
 				//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
 				if ($this->_doctype->entities()) {
 					$doctypeWithEntities = "<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
+					$ignoreLines = 3;
 				}
 				//if ($this->_doctype->entities()) {
 				//	$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
@@ -85,7 +91,8 @@ class Pagemill_Parser {
 			}
 		} else if (!$doctypeFromSource) {
 			if ($this->_doctype->entities()) {
-				$doctypeWithEntities = "<!DOCTYPE root [\n" . $this->_entityReferences($this->_doctype->entities()) . "]>\n";
+				$doctypeWithEntities = "<!DOCTYPE root [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
+				$ignoreLines = 3;
 				//$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE _root_ [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
 			}
 		}
@@ -100,14 +107,35 @@ class Pagemill_Parser {
 			if (($ec == 4 || $ec == 5) && !$this->_xmlDeclString && !$this->_doctypeString) {
 				xml_parser_free($parser);
 				$parser = $this->createParser();
-				$result = xml_parse($parser, $doctypeWithEntities . '<pm:template>' . $source . '</pm:template>', true);
+				$result = xml_parse($parser, $doctypeWithEntities . '<pm:template xmlns:pm="http://typeframe.com/pagemill">' . $source . '</pm:template>', true);
+				$ignoreBytes = strlen('<pm:template xmlns:pm="http://typeframe.com/pagemill">');
 			}
 		}
 		if (!$result) {
-			throw new Exception('Error #' . xml_get_error_code($parser) . ': ' . xml_error_string(xml_get_error_code($parser)));
+			$line = xml_get_current_line_number($parser) - $ignoreLines;
+			$column = xml_get_current_column_number($parser);
+			$index = xml_get_current_byte_index($parser) - strlen($doctypeWithEntities) - $ignoreBytes;
+			$this->_throwException(xml_get_error_code($parser), $source, $line, $column, $index);
 		}
 		xml_parser_free($parser);
 		return $this->_root;
+	}
+	private function _throwException($errorCode, $source, $line, $column, $index) {
+		switch ($errorCode) {
+			case 26:
+				$left = strrpos($source, '&', $index - strlen($source));
+				if ($left !== false) {
+					$entity = substr($source, $left + 1, $index - $left - 2);
+					throw new Exception("Undeclared entity '{$entity}' on line {$line}, column {$column}");
+				}
+				break;
+			case 68:
+				if (substr($source, $index - 2, 1) == '&') {
+					throw new Exception("Ampersand without entity name on line {$line}, column {$column}");
+				}
+				break;
+		}
+		throw new Exception('Error #' . $errorCode . ': ' . xml_error_string($errorCode) . " on line {$line}, column {$column}");
 	}
 	private function _declareNamespace($prefix, $uri) {
 		if (isset($this->_namespaces[$prefix])) {

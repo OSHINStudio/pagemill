@@ -36,7 +36,10 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		return 0;
 	}
 	public function output(Pagemill_Data $data, Pagemill_Stream $stream) {
-		$cycle = explode(',', $data->parseVariables($this->getAttribute('cycle')));
+		$cycle = $data->parseVariables($this->getAttribute('cycle'));
+		if ($cycle) {
+			$cycle = explode(',', $data->parseVariables($this->getAttribute('cycle')));
+		}
 		$name = $data->parseVariables($this->getAttribute('name'));
 		$times = $data->parseVariables($this->getAttribute('times'));
 		$delimiter = $this->getAttribute('delimiter');
@@ -66,7 +69,6 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		// if name given...
 		if ($name) {
 			$children = $data->get($name);
-			
 			if (is_null($children)) return;
 			if (is_array($children) || $children instanceof Countable) {
 				if (count($children) == 0) return;
@@ -195,11 +197,14 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			$this->_data[$this->_as] = $value;
 			$resetKeys[] = $this->_as;
 			if (is_array($value) || $value instanceof ArrayAccess) {
-				if ($this->_cycle) $this->_data[$this->_as]['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+				if ($this->_cycle) {
+					$this->_data[$this->_as]['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+				}
 				$this->_data[$this->_as]['loop_index'] = $loopTimes;
 			} else {
-				if ($this->_cycle) $this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-				$resetKeys[] = 'cycle';
+				if ($this->_cycle) {
+					$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+				}
 				$this->_data['loop_index'] = $loopTimes;
 				$resetKeys[] = 'loop_index';
 			}
@@ -217,8 +222,10 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				$this->_data['loop_value'] = $value;
 				$resetKeys[] = 'loop_value';
 			}
-			$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-			$resetKeys[] = 'cycle';
+			if ($this->_cycle) {
+				$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+				$resetKeys[] = 'cycle';
+			}
 			$this->_data['loop_index'] = $loopTimes;
 			$resetKeys[] = 'loop_index';
 		}

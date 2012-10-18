@@ -20,7 +20,8 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	public static function IsAssoc($value) {
 		if (!is_array($value) || empty($value)) return false;
 		if (!is_int(key($value))) return true;
-		return (0 !== count(array_diff_key($value, array_keys($value))));
+		//return (0 !== count(array_diff_key($value, array_keys($value))));
+		array_diff_key($value, array_keys(array_keys($value)));
 	}
 	/**
 	 * Determine if a value is either an associative array (IsAssoc()) or it
@@ -63,9 +64,10 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			}
 		}
 	}
-	public function get($key) {
-		if (!isset($this->_data[$key])) return null;
-		$value = $this->_data[$key];
+	public function &get($key) {
+		static $null = null;
+		if (!isset($this->_data[$key])) return $null;
+		$value =& $this->_data[$key];
 		$ok = false;
 		if (is_null($value) || is_scalar($value) || is_array($value) || is_a($value, 'Pagemill_Data') || self::LikeArray($value) || self::LikeAssoc($value)) {
 			$ok = true;
@@ -81,6 +83,8 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		if (!$ok) {
 			throw new Exception("Unable to process object of type " . get_class($value));
 		}
+		// Convert integer 0 to string because arbitrary strings == 0
+		//if ($value === 0) $value = '0';
 		return $value;
 	}
 	public function getArray() {
@@ -93,7 +97,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		static $permitted_tokens = array('T_STRING', 'T_CONSTANT_ENCAPSED_STRING', 'T_LNUMBER', 'T_DNUMBER', 'T_IS_EQUAL',
 											'T_IS_GREATER_OR_EQUAL', 'T_IS_NOT_EQUAL', 'T_IS_SMALLER_OR_EQUAL', 'T_BOOLEAN_AND',
 											'T_BOOLEAN_OR', 'T_WHITESPACE', 'T_VARIABLE', 'T_CLASS', 'T_OBJECT_OPERATOR',
-											'T_LOGICAL_AND', 'T_LOGICAL_OR');
+											'T_LOGICAL_AND', 'T_LOGICAL_OR', 'T_IS_IDENTICAL', 'T_IS_NOT_IDENTICAL');
 		static $additional_operators = array('LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=', 'EQ' => '==', 'NE' => '!=');
 
 		// decode the given expression
@@ -266,8 +270,8 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		return self::$_compiled[$expression];
 	}
 	/**
-	 * A method that provides the minimum scope possible for evaluating a
-	 * compiled expression.
+	 * A method that provides a minimal scope for evaluating a compiled
+	 * expression.
 	 * @param Pagemill_Data $data
 	 * @param string $compiled
 	 * @return mixed
@@ -277,7 +281,8 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	}
 	public function evaluate($expression) {
 		$compiled = self::_Compile($expression);
-		return self::_Evaluate($this, $compiled);
+		$result = self::_Evaluate($this, $compiled);
+		return $result;
 	}
 	public function parseVariables($text) {
 		$result = $text;
@@ -286,10 +291,12 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			$expression = $matches[1][$index];
 			$evaluated = $this->evaluate($expression);
 			if (!is_null($evaluated) && !is_scalar($evaluated)) {
-				if (Pagemill_Data::LikeArray($evaluated)) {
-					$evaluated = '(Array)';
+				if (is_array($evaluated)) {
+					$evaluated = self::IsAssoc($evaluated) ? '(Object)' : '(Array)';
 				} else if (is_a($evaluated, 'Pagemill_Data')) {
 					$evaluated = '(Object)';
+				} else if (Pagemill_Data::LikeArray($evaluated)) {
+					$evaluated = '(ArrayInterface)';
 				} else if (Pagemill_Data::LikeAssoc($evaluated)) {
 					$evaluated = '(Interface)';
 				} else {
@@ -310,7 +317,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	public function offsetUnset($offset) {
 		unset($this->_data[$offset]);
 	}
-	public function offsetGet($offset) {
+	public function &offsetGet($offset) {
 		return $this->get($offset);
 	}
 	//###################   Iterator special methods.  #######################\\
