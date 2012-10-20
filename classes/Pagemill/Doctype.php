@@ -32,6 +32,8 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 		// in templates, but it should still be able to encode the internal
 		// entities that all XML parsers are required to support.
 		// TODO: Should $internal be merged with the $this->_entities array?
+		// It's not strictly necessary, since the parser should always handle
+		// internal entities.
 		static $internal = array(
 			'<' => '&lt;',
 			'>' => '&gt;',
