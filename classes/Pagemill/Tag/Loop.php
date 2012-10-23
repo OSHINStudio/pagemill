@@ -194,6 +194,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		}
 	}
 	private function _processIteration($key, $value, $delimit, $loopTimes) {
+		$n = new Pagemill_Data();
 		$resetKeys = array();
 		$this->_data[$this->_name] = null;
 		$resetKeys[] = $this->_name;
@@ -201,10 +202,21 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			$this->_data[$this->_as] = $value;
 			$resetKeys[] = $this->_as;
 			if (is_array($value) || $value instanceof ArrayAccess) {
-				if ($this->_cycle) {
+				/*if ($this->_cycle) {
 					$this->_data[$this->_as]['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
 				}
-				$this->_data[$this->_as]['loop_index'] = $loopTimes;
+				try {
+					$this->_data[$this->_as]['loop_index'] = $loopTimes;
+				} catch(Exception $e) {
+					print_r($this->_data[$this->_as]);
+					exit;
+				}*/
+				if ($this->_cycle) {
+					$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+					$resetKeys[] = 'cycle';
+				}
+				$this->_data['loop_index'] = $loopTimes;
+				$resetKeys[] = 'loop_index';
 			} else {
 				if ($this->_cycle) {
 					$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
