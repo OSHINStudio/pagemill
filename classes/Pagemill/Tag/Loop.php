@@ -201,33 +201,6 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		if ($this->_as) {
 			$this->_data[$this->_as] = $value;
 			$resetKeys[] = $this->_as;
-			if (is_array($value) || $value instanceof ArrayAccess) {
-				/*if ($this->_cycle) {
-					$this->_data[$this->_as]['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-				}
-				try {
-					$this->_data[$this->_as]['loop_index'] = $loopTimes;
-				} catch(Exception $e) {
-					print_r($this->_data[$this->_as]);
-					exit;
-				}*/
-				if ($this->_cycle) {
-					$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-					$resetKeys[] = 'cycle';
-				}
-				$this->_data['loop_index'] = $loopTimes;
-				$resetKeys[] = 'loop_index';
-			} else {
-				if ($this->_cycle) {
-					$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-				}
-				$this->_data['loop_index'] = $loopTimes;
-				$resetKeys[] = 'loop_index';
-			}
-			if ($this->_asKey) {
-				$this->_data[$this->_asKey] = $key;
-				$resetKeys[] = $this->_asKey;
-			}
 		} else {
 			if (is_array($value) || $value instanceof ArrayAccess) {
 				foreach ($value as $k => $v) {
@@ -238,12 +211,16 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				$this->_data['loop_value'] = $value;
 				$resetKeys[] = 'loop_value';
 			}
-			if ($this->_cycle) {
-				$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
-				$resetKeys[] = 'cycle';
-			}
-			$this->_data['loop_index'] = $loopTimes;
-			$resetKeys[] = 'loop_index';
+		}
+		if ($this->_cycle) {
+			$this->_data['cycle'] = $this->_cycle[$loopTimes % count($this->_cycle)];
+			$resetKeys[] = 'cycle';
+		}
+		$this->_data['loop_index'] = $loopTimes;
+		$resetKeys[] = 'loop_index';
+		if ($this->_asKey) {
+			$this->_data[$this->_asKey] = $key;
+			$resetKeys[] = $this->_asKey;
 		}
 		foreach ($this->children() as $child) {
 			$child->process($this->_data, $this->_stream);
