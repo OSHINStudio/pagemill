@@ -8,6 +8,8 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	private $_iteratorPos = -1;
 	private static $_exprFuncs = array();
 	private static $_classHandlers = array();
+	private $_handle = null;
+	private $_tines = array();
 	public function __construct() {
 		
 	}
@@ -66,18 +68,33 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	}
 	public function &get($key) {
 		static $null = null;
-		if (!isset($this->_data[$key])) return $null;
+		if ($key == '_tines') {
+			return $this->_tines;
+		}
+		if (!isset($this->_data[$key])) {
+			if ($this->_handle) {
+				return $this->_handle->get($key);
+			}
+			return $null;
+		}
 		$value =& $this->_data[$key];
 		$ok = false;
-		if (is_null($value) || is_scalar($value) || is_array($value) || is_a($value, 'Pagemill_Data') || self::LikeArray($value) || self::LikeAssoc($value)) {
+		if (is_array($value) && self::IsAssoc($value)) {
+			$n = new Pagemill_Data();
+			$n->_data = $value;
+			$value = $n;
+			$ok = true;
+		} else if (is_null($value) || is_scalar($value) || is_array($value) || is_a($value, 'Pagemill_Data') || self::LikeArray($value) || self::LikeAssoc($value)) {
 			$ok = true;
 		}
 		if (is_object($value)) {
-			if (isset(self::$_classHandlers[get_class($value)])) {
-				$func = self::$_classHandlers[get_class($value)];
-				$value = call_user_func($func, $value);
-				$this->_data[$key] = $value;
-				$ok = true;
+			foreach(self::$_classHandlers as $cls => $func) {
+				if (is_a($value, $cls)) {
+					$value = call_user_func($func, $value);
+					$this->_data[$key] = $value;
+					$ok = true;
+					break;
+				}
 			}
 		}
 		if (!$ok) {
@@ -438,6 +455,18 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			foreach ($value as $node)
 				$node->sortNodes($args);
 		}
+	}
+	public function fork() {
+		$forked = new Pagemill_Data();
+		$forked->_handle = $this;
+		$this->_tines[] = $forked;
+		return $forked;
+	}
+	public function handle() {
+		return $this->_handle;
+	}
+	public function tines() {
+		return $this->_tines;
 	}
 	/**
 	 * Declare a function that casts objects of the specified class

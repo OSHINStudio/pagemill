@@ -35,6 +35,15 @@ class Pagemill {
 	 * @return Pagemill_Tag
 	 */
 	public function parseFile($file) {
+		if (is_null($file) || $file === '') {
+			throw new Exception('File name required');
+		}
+		if (!file_exists($file)) {
+			throw new Exception("File '{$file}' does not exist");
+		}
+		if (is_dir($file)) {
+			throw new Exception("'{$file}' is a directory");
+		}
 		if (defined('PAGEMILL_CACHE_DIR')) {
 			$md5 = md5($file);
 			$cacheFile = PAGEMILL_CACHE_DIR . "/{$md5}";
@@ -70,16 +79,22 @@ class Pagemill {
 	 * Process a template file and send it to output.
 	 * @param string $file The filename.
 	 */
-	public function writeFile($file) {
+	public function writeFile($file, Pagemill_Stream $stream = null) {
+		if (is_null($stream)) {
+			$stream = new Pagemill_Stream();
+		}
 		$tree = $this->parseFile($file);
-		return $tree->process($this->_data, new Pagemill_Stream());
+		return $tree->process($this->_data, $stream);
 	}
 	/**
 	 * Process a template string and send it to output.
 	 * @param string $source
 	 */
-	public function writeString($source, Pagemill_Doctype $doctype = null) {
+	public function writeString($source, Pagemill_Stream $stream = null) {
+		if (is_null($stream)) {
+			$stream = new Pagemill_Stream();
+		}
 		$tree = $this->parseString($source);
-		return $tree->process($this->_data, new Pagemill_Stream());
+		return $tree->process($this->_data, $stream);
 	}
 }
