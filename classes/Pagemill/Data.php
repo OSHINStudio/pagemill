@@ -13,6 +13,16 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	public function __construct() {
 		
 	}
+	public function __clone() {
+		if ($this->_handle) {
+			$this->_handle = clone $this->_handle;
+		}
+		$array = array();
+		foreach ($this->_tines as $tine) {
+			$array[] = clone $tine;
+		}
+		$this->_tines = $array;
+	}
 	/**
 	 * Determine if a value is an associative array (i.e., it is_array() and
 	 * its keys include non-numeric values).
@@ -53,9 +63,9 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		);
 	}
 	public function set($key, $value) {
-		if (is_null($value)) {
-			unset($this->_data[$key]);
-		} else {
+		//if (is_null($value)) {
+		//	unset($this->_data[$key]);
+		//} else {
 			if (self::IsAssoc($value)) {
 				// Convert associative arrays into objects
 				$object = new Pagemill_Data();
@@ -64,13 +74,16 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			} else {
 				$this->_data[$key] = $value;
 			}
-		}
+		//}
 	}
 	public function &get($key) {
 		static $null = null;
-		if ($key == '_tines') {
+		/*if ($key == '_tines') {
 			return $this->_tines;
 		}
+		if ($key == '_handle') {
+			return $this->_handle;
+		}*/
 		if (!isset($this->_data[$key])) {
 			if ($this->_handle) {
 				return $this->_handle->get($key);
@@ -456,15 +469,28 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 				$node->sortNodes($args);
 		}
 	}
+	/**
+	 * Create a data fork. The Pagemill can use forks to modify data within a
+	 * limited scope while leaving the parent scope intact.
+	 * @return \Pagemill_Data
+	 */
 	public function fork() {
 		$forked = new Pagemill_Data();
 		$forked->_handle = $this;
 		$this->_tines[] = $forked;
 		return $forked;
 	}
+	/**
+	 * Get the parent of a forked data object.
+	 * @return Pagemill_Data|null
+	 */
 	public function handle() {
 		return $this->_handle;
 	}
+	/**
+	 * Get an array of data objects forked from this one.
+	 * @return Pagemill_Data[]
+	 */
 	public function tines() {
 		return $this->_tines;
 	}

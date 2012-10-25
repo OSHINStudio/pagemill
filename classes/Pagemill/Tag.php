@@ -94,6 +94,13 @@ class Pagemill_Tag extends Pagemill_Node {
 		}
 		return $string;
 	}
+	protected function buildRawAttributeString() {
+		$string = '';
+		foreach ($this->attributes as $key => $value) {
+			$string .= ' ' . $key . '="' . $this->doctype()->encodeEntities($value) . '"';
+		}
+		return $string;
+	}
 	/**
 	 * Output the processed tag to a stream.
 	 * @param Pagemill_Data $data The current data node.
@@ -117,13 +124,13 @@ class Pagemill_Tag extends Pagemill_Node {
 			}
 		}
 	}
-	protected function rawOutput(Pagemill_Data $data, Pagemill_Stream $stream) {
+	protected function rawOutput(Pagemill_Stream $stream) {
 		$stream->puts("<{$this->name()}");
-		$stream->puts($this->buildAttributeString($data));
+		$stream->puts($this->RawbuildAttributeString());
 		if (count($this->children())) {
 			$stream->puts(">");
 			foreach ($this->children() as $child) {
-				$child->rawOutput($data, $stream);
+				$child->rawOutput($stream);
 			}
 			$stream->puts("</{$this->name()}>");
 		} else {
