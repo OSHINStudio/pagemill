@@ -194,7 +194,15 @@ class Pagemill_Parser {
 		}
 		$this->_tagStack[] = $tag;
 	}
+	private function _nodeIsCombinable(Pagemill_Node $node) {
+		return ( 
+				(get_class($node) == 'Pagemill_Tag' && !$node->hasPreprocessors() && strpos($node->name(), ':') === false)
+				|| $node instanceof Pagemill_Node_Text
+				|| $node instanceof Pagemill_Node_Frag
+		);
+	}
 	private function _xmlEndElement($parser, $name) {
+		/* @var Pagemill_Tag */
 		$last = array_pop($this->_tagStack);
 		$last->appendText($this->_currentCharacterData);
 		$this->_currentCharacterData = '';
@@ -204,6 +212,33 @@ class Pagemill_Parser {
 				$cls = $attributeRegistry[$k];
 				$attribute = new $cls($k, $v, $last);
 			}
+		}
+		// Check if children are combinable
+		$combinable = false;
+		if ($last->parent()) {
+			if ($this->_nodeIsCombinable($last)) {
+				$combinable = true;
+				foreach ($last->children() as $child) {
+					if (count($child->children())) {
+						$combinable = false;
+						break;
+					}
+					if (!$this->_nodeIsCombinable($child)) {
+						$combinable = false;
+						break;
+					}
+				}
+			}
+		}
+		if ($combinable) {
+			$frag = new Pagemill_Node_Frag($last->doctype());
+			//foreach ($last->children() as $child) {
+			//	$frag->appendChild($last);
+			//}
+			$frag->appendChild($last);
+			$last->parent()->appendChild($frag);
+			$last->detach();
+			$last = $frag;
 		}
 		if (!count($this->_tagStack)) {
 			$this->_root = $last;

@@ -25,4 +25,7 @@ class Pagemill_Node_Text extends Pagemill_Node {
 	public function process(Pagemill_Data $data, Pagemill_Stream $stream, $encode = true) {
 		$this->output($data, $stream, $encode);
 	}
+	public function children() {
+		return array();
+	}
 }

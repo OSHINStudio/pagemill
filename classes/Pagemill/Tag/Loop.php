@@ -66,11 +66,11 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		$this->_as = $as;
 		$this->_asKey = $asKey;
 		$this->_cycle = $cycle;
-		
+		$this->_delimiter = $delimiter;
 		
 		// if name given...
 		if ($name) {
-			$children = $data->get($name);
+			$children = $data->evaluate($name);
 			if (is_null($children)) return;
 			if (is_array($children) || $children instanceof Countable) {
 				if (count($children) == 0) return;
@@ -177,6 +177,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				$value = $array->current();
 			}
 			if ($index >= $start) {
+				$delimit = ($index < $end);
 				$this->_processIteration($key, $value, $delimit, $loopTimes);
 			}
 			$index++;

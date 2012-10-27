@@ -24,10 +24,28 @@ class Pagemill {
 		return $this->get($key);
 	}
 	public function addLoop() {
-	
+		$args = func_get_args();
+		if (count($args) < 2) {
+			throw new Exception('Pagemill->addLoop() requires at least 2 arguments');
+		}
+		$loop =& $this->_data;
+		while (count($args) > 1) {
+			$key = array_shift($args);
+			if (!isset($loop[$key])) {
+				$loop[$key] = array();
+				$loop =& $loop[$key];
+			} else {
+				if (!is_array($loop[$key])) {
+					throw new Exception("Loops can only be added to arrays.");
+				}
+				$loop =& $loop[$key];
+			}
+		}
+		$loop[] = $args[0];
 	}
 	public function sortLoop() {
-	
+		$args = func_get_args();
+		$this->_data->sortNodes($args);
 	}
 	/**
 	 * Parse a template file into a tag tree for processing.

@@ -13,16 +13,6 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	public function __construct() {
 		
 	}
-	public function __clone() {
-		if ($this->_handle) {
-			$this->_handle = clone $this->_handle;
-		}
-		$array = array();
-		foreach ($this->_tines as $tine) {
-			$array[] = clone $tine;
-		}
-		$this->_tines = $array;
-	}
 	/**
 	 * Determine if a value is an associative array (i.e., it is_array() and
 	 * its keys include non-numeric values).
@@ -75,6 +65,11 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 				$this->_data[$key] = $value;
 			}
 		//}
+	}
+	public function setArray($array) {
+		foreach($array as $key => $value) {
+			$this->set($key, $value);
+		}
 	}
 	public function &get($key) {
 		static $null = null;
@@ -131,7 +126,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		static $additional_operators = array('LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=', 'EQ' => '==', 'NE' => '!=');
 
 		// decode the given expression
-		//$expression = html_entity_decode($expression);
+		$expression = html_entity_decode($expression);
 		// if this expression is not in our cache yet, compile and cache it
 		if (!isset(self::$_compiled[$expression])) {
 			// first step: validate expression tokens and determine if "is mutator"
@@ -159,7 +154,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 						$brackets--;
 					}
 					if (!in_array($token, $permitted_chars)) {
-						trigger_error("Invalid operator $token.");
+						trigger_error("Invalid operator $token ({$expression})");
 						return $defaultBlank;
 					}
 					if ('=' == $token) {
@@ -314,7 +309,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		$result = self::_Evaluate($this, $compiled);
 		return $result;
 	}
-	public function parseVariables($text) {
+	public function parseVariables($text, Pagemill_Doctype $encoder = null) {
 		$result = $text;
 		preg_match_all('/@{([\w\W\s\S]*?)}@/i', $text, $matches);
 		foreach ($matches[0] as $index => $container) {
@@ -332,6 +327,9 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 				} else {
 					$evaluated = '(Unknown)';
 				}
+			}
+			if ($encoder) {
+				$evaluated = $encoder->encodeEntities($evaluated);
 			}
 			$result = str_replace($container, $evaluated, $result);
 		}

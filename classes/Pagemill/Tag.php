@@ -44,6 +44,9 @@ class Pagemill_Tag extends Pagemill_Node {
 	public function attachPreprocess(Pagemill_TagPreprocessor $preprocess) {
 		$this->_before[] = $preprocess;
 	}
+	public function hasPreprocessors() {
+		return (count($this->_before) > 0);
+	}
 	public function name($withPrefix = true) {
 		if ( (!$withPrefix) && ($index = strpos($this->name, ':')) !== false ) {
 			return substr($this->name, $index + 1);
@@ -126,7 +129,7 @@ class Pagemill_Tag extends Pagemill_Node {
 	}
 	protected function rawOutput(Pagemill_Stream $stream) {
 		$stream->puts("<{$this->name()}");
-		$stream->puts($this->RawbuildAttributeString());
+		$stream->puts($this->buildRawAttributeString());
 		if (count($this->children())) {
 			$stream->puts(">");
 			foreach ($this->children() as $child) {

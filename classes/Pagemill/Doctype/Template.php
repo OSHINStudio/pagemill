@@ -2,7 +2,6 @@
 class Pagemill_Doctype_Template extends Pagemill_Doctype {
 	public function __construct($nsPrefix) {
 		parent::__construct($nsPrefix);
-		
 		$this->keepNamespaceDeclarationInOutput = false;
 		
 		$this->registerTag('template', 'Pagemill_Tag_Template');

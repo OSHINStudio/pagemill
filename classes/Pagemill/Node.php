@@ -13,6 +13,9 @@ abstract class Pagemill_Node {
 	public function __construct(Pagemill_Doctype $doctype) {
 		$this->doctype = $doctype;
 	}
+	public function doctype() {
+		return $this->doctype;
+	}
 	abstract public function appendChild(Pagemill_Node $node);
 	abstract public function appendText($text);
 	abstract protected function output(Pagemill_Data $data, Pagemill_Stream $stream);
