@@ -62,6 +62,9 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 		$cls = get_called_class();
 		$string = file_get_contents($filename);
 		$xml = $cls::LoadString($string);
+		if (is_null($xml)) {
+			trigger_error("Failed to load {$filename}");
+		}
 		return $xml;
 	}
 	/**
@@ -152,7 +155,7 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 		}
 	}
 	protected static function _ConvertUtf8ToXmlEntities($string) {
-		foreach (get_html_translation_table() as $character => $entity) {
+		foreach (get_html_translation_table(HTML_ENTITIES, ENT_COMPAT, 'UTF-8') as $character => $entity) {
 			if ( ($entity != '&amp;') && ($entity != '&quot;') && ($entity != '&gt;') && ($entity != '&lt;') ) {
 				// Solution found at http://us3.php.net/ord (darien at etelos dot com 19-Jan-2007 12:27).
 				$kbe = mb_convert_encoding($character, 'UCS-4BE', 'UTF-8');
