@@ -101,7 +101,8 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				usort($children, array($this, '_cmp'));
 			}
 			
-			if ($this->hasAttribute('limit')) {
+			$limit = $data->parseVariables($this->getAttribute('limit'));
+			if ($limit) {
 				// We have to do a numeric iteration.
 				$start = null;
 				$end = null;
@@ -111,25 +112,25 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 					$end = $parts[1];
 				} else {
 					$start = 0;
-					$end = $parts[1];
+					$end = $parts[0];
 				}
 				if (is_array($children) || $children instanceof Countable) {
 					if (count($children) < ($end - $start)) {
 						$end = count($children) - $start;
 					}
 				}
-				if (is_array($children)) {
+				if (is_array($children) && isset($children[$start])) {
 					// for $start to $end
 					$loopTimes = $this->_forLimit($children, $start, $end);
 				} else if ($children instanceof SeekableIterator) {
 					// seek to $start and do foreach
 					$loopTimes = $this->_forEachLimit($children, $start, $end);
-				} else if ($children instanceof ArrayAccess) {
+				} else if ($children instanceof ArrayAccess && isset($children[$start])) {
 					// for $start to $end
 					$loopTimes = $this->_forLimit($children, $start, $end);
 				} else {
 					// iterate to lower limit and proccess through upper limit
-					$loopTimes = $this->_forEachLimit($array, $start, $end);
+					$loopTimes = $this->_forEachLimit($children, $start, $end);
 				}
 			} else {
 				$loopTimes = $this->_forEach($children);
