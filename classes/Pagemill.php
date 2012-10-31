@@ -14,8 +14,14 @@ class Pagemill {
 	public function set($key, $value) {
 		$this->_data->set($key, $value);
 	}
+	public function setArray(array $array) {
+		$this->_data->setArray($array);
+	}
 	public function setVariable($key, $value) {
 		$this->set($key, $value);
+	}
+	public function setVariableArray(array $array) {
+		$this->setArray($array);
 	}
 	public function get($key) {
 		return $this->_data->get($key);
