@@ -8,7 +8,7 @@ class Pagemill_Tag extends Pagemill_Node {
 	protected $name;
 	protected $attributes;
 	private $_children = array();
-	private $_doctype = '';
+	private $_doctype = null;
 	protected $collapse = true;
 	private $_header;
 	private $_cachedName;
@@ -39,7 +39,13 @@ class Pagemill_Tag extends Pagemill_Node {
 		if ($parent) {
 			$parent->appendChild($this);
 		}
-		$this->_doctype = $doctype;
+		if (is_null($doctype)) {
+			if (!is_null($parent)) {
+				$this->_doctype = $parent->doctype();
+			}
+		} else {
+			$this->_doctype = $doctype;
+		}
 	}
 	public function attachPreprocess(Pagemill_TagPreprocessor $preprocess) {
 		$this->_before[] = $preprocess;

@@ -58,7 +58,7 @@ class Pagemill {
 	 * @param string $file The filename.
 	 * @return Pagemill_Tag
 	 */
-	public function parseFile($file) {
+	public function parseFile($file, $doctype = null) {
 		if (is_null($file) || $file === '') {
 			throw new Exception('File name required');
 		}
@@ -81,7 +81,9 @@ class Pagemill {
 			}
 		}
 		$source = file_get_contents($file);
-		$doctype = Pagemill_Doctype::ForFile($file);
+		if (is_null($doctype)) {
+			$doctype = Pagemill_Doctype::ForFile($file);
+		}
 		$tree = $this->parseString($source, $doctype);
 		if (defined('PAGEMILL_CACHE_DIR')) {
 			$serial = serialize($tree);
