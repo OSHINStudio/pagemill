@@ -96,12 +96,17 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			$ok = true;
 		}
 		if (is_object($value)) {
-			foreach(self::$_classHandlers as $cls => $func) {
-				if (is_a($value, $cls)) {
-					$value = call_user_func($func, $value);
-					$this->_data[$key] = $value;
-					$ok = true;
-					break;
+			if (get_class($value) == 'stdClass') {
+				$value = (array)$value;
+				$ok = true;
+			} else {
+				foreach(self::$_classHandlers as $cls => $func) {
+					if (is_a($value, $cls)) {
+						$value = call_user_func($func, $value);
+						$this->_data[$key] = $value;
+						$ok = true;
+						break;
+					}
 				}
 			}
 		}
@@ -503,7 +508,8 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	}
 }
 
-// Add built-in expression functions to Pagemill_Data
+
+// Add built-in expression functions
 Pagemill_Data::RegisterExprFunc('abs',										'abs');
 Pagemill_Data::RegisterExprFunc('addslashes',								'addslashes');
 Pagemill_Data::RegisterExprFunc(array('ceil', 'ceiling'),					'ceil');
