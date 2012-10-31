@@ -70,6 +70,15 @@ class Pagemill_Tag extends Pagemill_Node {
 		}
 		return $final;
 	}
+	/**
+	 * Process the tag and its children using the provided data and output the
+	 * result to the provided stream. This method is final because it should
+	 * be guaranteed to handle tag preprocessors and reset the tag to its
+	 * original state. Tags that require special processing should override the
+	 * output() method.
+	 * @param Pagemill_Data $data
+	 * @param Pagemill_Stream $stream
+	 */
 	final public function process(Pagemill_Data $data, Pagemill_Stream $stream) {
 		// Changes made to the tag's name and attributes while processing
 		// output are temporary.
@@ -90,6 +99,22 @@ class Pagemill_Tag extends Pagemill_Node {
 		$this->_before = $this->_cachedBefore;
 		$this->_processing = false;
 	}
+	/**
+	 * Process the tag's children (but not the tag itself).
+	 * @param Pagemill_Data $data
+	 * @param Pagemill_Stream $stream
+	 */
+	final public function processInner(Pagemill_Data $data, Pagemill_Stream $stream) {
+		foreach ($this->children() as $child) {
+			$child->process($data, $stream);
+		}
+	}
+	/**
+	 * Build an attribute string from the tag's attributes. This method will
+	 * evaluate expressions in attribute values.
+	 * @param Pagemill_Data $data
+	 * @return string
+	 */
 	protected function buildAttributeString(Pagemill_Data $data) {
 		$string = '';
 		foreach ($this->attributes as $key => $value) {
@@ -97,6 +122,10 @@ class Pagemill_Tag extends Pagemill_Node {
 		}
 		return $string;
 	}
+	/**
+	 * Build a raw attribute string. This method will not evaluate expressions.
+	 * @return string
+	 */
 	protected function buildRawAttributeString() {
 		$string = '';
 		foreach ($this->attributes as $key => $value) {
@@ -127,6 +156,11 @@ class Pagemill_Tag extends Pagemill_Node {
 			}
 		}
 	}
+	/**
+	 * Output the content of the tag without processing tags or evaluating
+	 * expressions.
+	 * @param Pagemill_Stream $stream
+	 */
 	protected function rawOutput(Pagemill_Stream $stream) {
 		$stream->puts("<{$this->name()}");
 		$stream->puts($this->buildRawAttributeString());
