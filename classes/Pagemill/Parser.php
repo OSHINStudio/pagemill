@@ -41,7 +41,7 @@ class Pagemill_Parser {
 	 */
 	public function parse($source, Pagemill_Doctype $doctype = null) {
 		if (is_null($doctype)) {
-			$doctype = new Pagemill_Doctype('');
+			$doctype = new Pagemill_Doctype('', '');
 		}
 		$this->_doctype = $doctype;
 		$this->_root = null;

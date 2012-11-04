@@ -10,13 +10,19 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	private static $_templateDoctypeClass = 'Pagemill_Doctype_Template';
 	protected $keepNamespaceDeclarationInOutput = true;
 	private $_nsPrefix = '';
+	protected $nsUri = '';
+	private $_namespaces = array();
 	public function __construct($nsPrefix) {
 		$this->_nsPrefix = $nsPrefix;
+		$this->_namespaces[$this->nsUri] = $nsPrefix;
 		$this->registerTag('_comment', 'Pagemill_Tag_Comment');
 		$this->registerTag('_tmplcomment', 'Pagemill_Tag_NoOutput');
 	}
 	public function nsPrefix() {
 		return $this->_nsPrefix;
+	}
+	public function getPrefixFor($nsUri) {
+		return (isset($this->_namespaces[$nsUri]) ? $this->_namespaces[$nsUri] : false);
 	}
 	public function entities() {
 		return $this->_entities;
