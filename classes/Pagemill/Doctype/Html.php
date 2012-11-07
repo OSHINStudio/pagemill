@@ -15,7 +15,7 @@ class Pagemill_Doctype_Html extends Pagemill_Doctype {
 		$this->registerTag('title', 'Pagemill_Tag_AlwaysExpand');
 		$this->registerTag('select', 'Pagemill_Tag_Html_Select');
 		$this->registerTag('option', 'Pagemill_Tag_Html_Option');
-		
+
 		$this->addEntityArray(get_html_translation_table(HTML_ENTITIES, ENT_COMPAT, 'UTF-8'));
 	}
 }

@@ -139,9 +139,9 @@ class Pagemill_Parser {
 		throw new Exception('Error #' . $errorCode . ': ' . xml_error_string($errorCode) . " on line {$line}, column {$column}");
 	}
 	private function _declareNamespace($prefix, $uri) {
-		if (isset($this->_namespaces[$prefix])) {
+		/*if (isset($this->_namespaces[$prefix])) {
 			throw new Exception("Namespace prefix {$prefix} declared more than once");
-		}
+		}*/
 		$this->_namespaces[$prefix] = $uri;
 		$doctype = Pagemill_Doctype::ForNamespaceUri($uri, $prefix);
 		return $doctype;
@@ -195,8 +195,13 @@ class Pagemill_Parser {
 		$this->_tagStack[] = $tag;
 	}
 	private function _nodeIsCombinable(Pagemill_Node $node) {
+		static $combinableClasses = array(
+			'Pagemill_Tag',
+			'Pagemill_Tag_AlwaysExpand',
+			'Pagemill_Tag_NoOutput'
+		);
 		return ( 
-				(get_class($node) == 'Pagemill_Tag' && !$node->hasPreprocessors() && strpos($node->name(), ':') === false)
+				(in_array(get_class($node), $combinableClasses) && !$node->hasPreprocessors() && strpos($node->name(), ':') === false)
 				|| $node instanceof Pagemill_Node_Text
 				|| $node instanceof Pagemill_Node_Frag
 		);

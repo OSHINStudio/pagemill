@@ -15,8 +15,8 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	public function __construct($nsPrefix) {
 		$this->_nsPrefix = $nsPrefix;
 		$this->_namespaces[$this->nsUri] = $nsPrefix;
-		$this->registerTag('_comment', 'Pagemill_Tag_Comment');
-		$this->registerTag('_tmplcomment', 'Pagemill_Tag_NoOutput');
+		$this->registerTag('/_comment', 'Pagemill_Tag_Comment');
+		$this->registerTag('/_tmplcomment', 'Pagemill_Tag_NoOutput');
 	}
 	public function nsPrefix() {
 		return $this->_nsPrefix;
