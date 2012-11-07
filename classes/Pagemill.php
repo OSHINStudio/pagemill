@@ -105,22 +105,20 @@ class Pagemill {
 	 * Process a template file and send it to output.
 	 * @param string $file The filename.
 	 */
-	public function writeFile($file, Pagemill_Stream $stream = null) {
-		if (is_null($stream)) {
-			$stream = new Pagemill_Stream();
-		}
+	public function writeFile($file, $return = false) {
+		$stream = new Pagemill_Stream($return);
 		$tree = $this->parseFile($file);
-		return $tree->process($this->_data, $stream);
+		$tree->process($this->_data, $stream);
+		return $stream->peek();
 	}
 	/**
 	 * Process a template string and send it to output.
 	 * @param string $source
 	 */
-	public function writeString($source, Pagemill_Stream $stream = null) {
-		if (is_null($stream)) {
-			$stream = new Pagemill_Stream();
-		}
+	public function writeString($source, $return = false) {
+		$stream = new Pagemill_Stream($return);
 		$tree = $this->parseString($source);
-		return $tree->process($this->_data, $stream);
+		$tree->process($this->_data, $stream);
+		return $stream->peek();
 	}
 }
