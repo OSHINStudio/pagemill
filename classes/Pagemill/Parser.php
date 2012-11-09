@@ -138,14 +138,6 @@ class Pagemill_Parser {
 		}
 		throw new Exception('Error #' . $errorCode . ': ' . xml_error_string($errorCode) . " on line {$line}, column {$column}");
 	}
-	private function _declareNamespace($prefix, $uri) {
-		/*if (isset($this->_namespaces[$prefix])) {
-			throw new Exception("Namespace prefix {$prefix} declared more than once");
-		}*/
-		$this->_namespaces[$prefix] = $uri;
-		$doctype = Pagemill_Doctype::ForNamespaceUri($uri, $prefix);
-		return $doctype;
-	}
 	private function _xmlStartElement($parser, $name, $attributes) {
 		$last = null;
 		if (count($this->_tagStack)) {
