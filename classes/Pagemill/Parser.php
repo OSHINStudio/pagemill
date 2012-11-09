@@ -162,9 +162,9 @@ class Pagemill_Parser {
 		}
 		foreach ($attributes as $k => $v) {
 			if ($k == 'xmlns' || substr($k, 0, 6) == 'xmlns:') {
-				$result = $this->_declareNamespace(substr($k, 6), $v);
-				$currentDoctype->merge($result);
-				if (!$result->keepNamespaceDeclarationInOutput()) {
+				$doctype = Pagemill_Doctype::ForNamespaceUri($v, substr($k, 6));
+				$currentDoctype->merge($doctype);
+				if (!$doctype->keepNamespaceDeclarationInOutput()) {
 					unset($attributes[$k]);
 				}
 			} else if (substr($k, 0, 3) == 'pm:' && !isset($this->_namespaces['pm'])) {
