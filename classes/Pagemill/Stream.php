@@ -25,9 +25,6 @@ class Pagemill_Stream {
 			echo $string;
 		}
 	}
-	public function append($string) {
-		$this->puts($string);
-	}
 	/**
 	 * Get the current content in the buffer. This method will not send the
 	 * content to output.

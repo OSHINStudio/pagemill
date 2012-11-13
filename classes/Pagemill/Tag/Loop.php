@@ -145,7 +145,11 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		$loopTimes = 0;
 		for ($i = $start; $i < $end; $i++) {
 			$delimit = ($i < $end - 1);
-			$this->_processIteration($i, $array[$i], $delimit, $loopTimes);
+			if (isset($array[$i])) {
+				$this->_processIteration($i, $array[$i], $delimit, $loopTimes);
+			} else {
+				break;
+			}
 			$loopTimes++;
 		}
 		return $loopTimes;
@@ -228,7 +232,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			$child->process($this->_data, $this->_stream);
 		}
 		if ($delimit) {
-			$this->_stream->append($this->_delimiter);
+			$this->_stream->puts($this->_delimiter);
 		}
 		foreach ($resetKeys as $k) {
 			if (isset($this->_originalData[$k])) {
