@@ -2,6 +2,7 @@
 
 class Pagemill {
 	private $_data;
+	private static $_processedTemplates = array();
 	public function __construct(Pagemill_Data $data = null) {
 		$this->_data = (is_null($data) ? (new Pagemill_Data()) : $data);
 	}
@@ -62,6 +63,7 @@ class Pagemill {
 	 * @return Pagemill_Tag
 	 */
 	public function parseFile($file, $doctype = null, $useCache = true) {
+		self::$_processedTemplates[] = $file;
 		if (is_null($file) || $file === '') {
 			throw new Exception('File name required');
 		}
@@ -118,6 +120,9 @@ class Pagemill {
 		$tree = $this->parseFile($file, null, $useCache);
 		$tree->process($this->_data, $stream);
 		return $stream->peek();
+	}
+	public static function ProcessedTemplates() {
+		return self::$_processedTemplates;
 	}
 	/**
 	 * Process a template string and send it to output.
