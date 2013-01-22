@@ -56,9 +56,12 @@ class Pagemill {
 	/**
 	 * Parse a template file into a tag tree for processing.
 	 * @param string $file The filename.
+	 * @param Pagemill_Doctype $doctype The doctype. Inferred from file
+	 * extension or source if null.
+	 * @param boolean $useCache Read/write to cache if available.
 	 * @return Pagemill_Tag
 	 */
-	public function parseFile($file, $doctype = null) {
+	public function parseFile($file, $doctype = null, $useCache = true) {
 		if (is_null($file) || $file === '') {
 			throw new Exception('File name required');
 		}
@@ -68,7 +71,7 @@ class Pagemill {
 		if (is_dir($file)) {
 			throw new Exception("'{$file}' is a directory");
 		}
-		if (defined('PAGEMILL_CACHE_DIR')) {
+		if (defined('PAGEMILL_CACHE_DIR') && $useCache) {
 			$md5 = md5($file);
 			$cacheFile = PAGEMILL_CACHE_DIR . "/{$md5}";
 			if (file_exists($cacheFile)) {
@@ -88,12 +91,14 @@ class Pagemill {
 		if (defined('PAGEMILL_CACHE_DIR')) {
 			$serial = serialize($tree);
 			file_put_contents($cacheFile, $serial);
+			@chmod($cacheFile, 0666);
 		}
 		return $tree;
 	}
 	/**
 	 * Parse a template string into a tag tree for processing.
 	 * @param string $source
+	 * @param Pagemill_Doctype The doctype to use. Inferred from source if null.
 	 * @return Pagemill_Tag
 	 */
 	public function parseString($source, Pagemill_Doctype $doctype = null) {
@@ -104,16 +109,20 @@ class Pagemill {
 	/**
 	 * Process a template file and send it to output.
 	 * @param string $file The filename.
+	 * @param boolean $return If true, return the output as a string.
+	 * @param boolean $useCache Read/write cache if available.
+	 * @return string|null
 	 */
-	public function writeFile($file, $return = false) {
+	public function writeFile($file, $return = false, $useCache = true) {
 		$stream = new Pagemill_Stream($return);
-		$tree = $this->parseFile($file);
+		$tree = $this->parseFile($file, null, $useCache);
 		$tree->process($this->_data, $stream);
 		return $stream->peek();
 	}
 	/**
 	 * Process a template string and send it to output.
 	 * @param string $source
+	 * @param boolean $return If true, return the output as a string.
 	 */
 	public function writeString($source, $return = false) {
 		$stream = new Pagemill_Stream($return);
