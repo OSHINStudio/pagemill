@@ -137,6 +137,7 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 		$fixed201 = false;
 		foreach ($errors as $error) {
 			if ( ($error->code == 201) && (!$fixed201) ) {
+				echo "Trying to fix namespaces";
 				if (strpos($string, 'xmlns:pm') === false) {
 					if ( (strpos($string, '<pm:') !== false) || (preg_match('/<[^>]*?pm\:[\w\W]*?\=/', $string)) ) {
 						// This XML document appears to use the Pagemill namespace without declaring it.
@@ -145,6 +146,8 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 					}
 				}
 				$fixed201 = true;
+			} else if ($error->code == 5) {
+				$string = '<pm:template xmlns:pm="http://typeframe.com/pagemill">' . $string . '</pm:template>';
 			}
 		}
 		return $string;
