@@ -229,6 +229,10 @@ class Pagemill_Tag extends Pagemill_Node {
 	public function removeAttribute($name) {
 		unset($this->attributes[$name]);
 	}
+	/**
+	 * 
+	 * @return Pagemill_Doctype
+	 */
 	public function doctype() {
 		return $this->_doctype;
 	}
