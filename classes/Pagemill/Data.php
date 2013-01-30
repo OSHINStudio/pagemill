@@ -111,7 +111,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			}
 		}
 		if (!$ok) {
-			throw new Exception("Unable to process object of type " . get_class($value));
+			throw new Exception("Unable to process object in variable '{$key}' of class '" . get_class($value) . "'");
 		}
 		// Convert integer 0 to string because arbitrary strings == 0
 		//if ($value === 0) $value = '0';

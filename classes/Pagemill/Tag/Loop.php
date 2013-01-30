@@ -84,7 +84,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 					// Unrecognized objects throw an exception so developers
 					// can determine whether to modify the object or register
 					// a handler.
-					throw new Exception('Unable to loop over object');
+					throw new Exception("Unable to loop over object '{$name}' of class '" . get_class($children) . "'");
 				}
 			}
 			
