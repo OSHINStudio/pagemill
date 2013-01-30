@@ -81,7 +81,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				} else if ($children instanceof ArrayObject) {
 					$children = $children->getArrayCopy();
 				} else if (!$children instanceof Iterator) {
-					throw new Exception('Unable to loop over object');
+					return;
 				}
 			}
 			
