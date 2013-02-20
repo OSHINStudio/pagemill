@@ -548,3 +548,5 @@ Pagemill_Data::RegisterExprFunc(array('date', 'format_date'),				'Pagemill_ExprF
 Pagemill_Data::RegisterExprFunc('json_encode',								'Pagemill_ExprFunc::json_encode');
 Pagemill_Data::RegisterExprFunc('pluralize',								'Pagemill_ExprFunc::pluralize');
 Pagemill_Data::RegisterExprFunc('var_dump',                                 'Pagemill_ExprFunc::var_dump');
+Pagemill_Data::RegisterExprFunc('sum',                                     'Pagemill_ExprFunc::sum');
+Pagemill_Data::RegisterExprFunc('avg',                                     'Pagemill_ExprFunc::avg');
