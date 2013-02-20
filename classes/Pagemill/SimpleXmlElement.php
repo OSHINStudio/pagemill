@@ -145,6 +145,8 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 					}
 				}
 				$fixed201 = true;
+			} else if ($error->code == 5) {
+				$string = '<pm:template xmlns:pm="http://typeframe.com/pagemill">' . $string . '</pm:template>';
 			}
 		}
 		return $string;

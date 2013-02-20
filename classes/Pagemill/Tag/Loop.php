@@ -71,7 +71,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		// if name given...
 		if ($name) {
 			$children = $data->evaluate($name);
-			if (is_null($children)) return;
+			if (is_null($children) || is_scalar($children)) return;
 			if (is_array($children) || $children instanceof Countable) {
 				if (count($children) == 0) return;
 			}
@@ -81,7 +81,10 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				} else if ($children instanceof ArrayObject) {
 					$children = $children->getArrayCopy();
 				} else if (!$children instanceof Iterator) {
-					throw new Exception('Unable to loop over object');
+					// Unrecognized objects throw an exception so developers
+					// can determine whether to modify the object or register
+					// a handler.
+					throw new Exception("Unable to loop over object '{$name}' of class '" . get_class($children) . "'");
 				}
 			}
 			

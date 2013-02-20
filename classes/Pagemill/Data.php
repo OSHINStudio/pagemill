@@ -111,7 +111,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			}
 		}
 		if (!$ok) {
-			throw new Exception("Unable to process object of type " . get_class($value));
+			throw new Exception("Unable to process object in variable '{$key}' of class '" . get_class($value) . "'");
 		}
 		// Convert integer 0 to string because arbitrary strings == 0
 		//if ($value === 0) $value = '0';
@@ -337,6 +337,28 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 				$evaluated = $encoder->encodeEntities($evaluated);
 			}
 			$result = str_replace($container, $evaluated, $result);
+		}
+		preg_match_all('/#{([\w\W\s\S]*?)}#/i', $result, $matches);
+		foreach ($matches[0] as $index => $container) {
+			$expression = $matches[1][$index];
+			$evaluated = $this->evaluate($expression);
+			if (!is_null($evaluated) && !is_scalar($evaluated)) {
+				if (is_array($evaluated)) {
+					$evaluated = self::IsAssoc($evaluated) ? '(Object)' : '(Array)';
+				} else if (is_a($evaluated, 'Pagemill_Data')) {
+					$evaluated = '(Object)';
+				} else if (Pagemill_Data::LikeArray($evaluated)) {
+					$evaluated = '(ArrayInterface)';
+				} else if (Pagemill_Data::LikeAssoc($evaluated)) {
+					$evaluated = '(Interface)';
+				} else {
+					$evaluated = '(Unknown)';
+				}
+			}
+			if ($encoder) {
+				$evaluated = $encoder->encodeEntities($evaluated);
+			}
+			$result = str_replace($container, '@{' . $evaluated . '}@', $result);
 		}
 		return $result;
 	}
