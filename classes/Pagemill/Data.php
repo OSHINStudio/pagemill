@@ -338,6 +338,28 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			}
 			$result = str_replace($container, $evaluated, $result);
 		}
+		preg_match_all('/#{([\w\W\s\S]*?)}#/i', $result, $matches);
+		foreach ($matches[0] as $index => $container) {
+			$expression = $matches[1][$index];
+			$evaluated = $this->evaluate($expression);
+			if (!is_null($evaluated) && !is_scalar($evaluated)) {
+				if (is_array($evaluated)) {
+					$evaluated = self::IsAssoc($evaluated) ? '(Object)' : '(Array)';
+				} else if (is_a($evaluated, 'Pagemill_Data')) {
+					$evaluated = '(Object)';
+				} else if (Pagemill_Data::LikeArray($evaluated)) {
+					$evaluated = '(ArrayInterface)';
+				} else if (Pagemill_Data::LikeAssoc($evaluated)) {
+					$evaluated = '(Interface)';
+				} else {
+					$evaluated = '(Unknown)';
+				}
+			}
+			if ($encoder) {
+				$evaluated = $encoder->encodeEntities($evaluated);
+			}
+			$result = str_replace($container, '@{' . $evaluated . '}@', $result);
+		}
 		return $result;
 	}
 	//##################   ArrayAccess special methods.  #####################\\
@@ -548,3 +570,5 @@ Pagemill_Data::RegisterExprFunc(array('date', 'format_date'),				'Pagemill_ExprF
 Pagemill_Data::RegisterExprFunc('json_encode',								'Pagemill_ExprFunc::json_encode');
 Pagemill_Data::RegisterExprFunc('pluralize',								'Pagemill_ExprFunc::pluralize');
 Pagemill_Data::RegisterExprFunc('var_dump',                                 'Pagemill_ExprFunc::var_dump');
+Pagemill_Data::RegisterExprFunc('sum',                                     'Pagemill_ExprFunc::sum');
+Pagemill_Data::RegisterExprFunc('avg',                                     'Pagemill_ExprFunc::avg');
