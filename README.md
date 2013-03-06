@@ -74,7 +74,9 @@ Pagemill supports several XML attributes for processing as well, including short
 
     <p pm:if="age >= 18">You will only see this paragraph if you are old enough to vote.</p>
 
-    <p pm:loop="people">Display @{name}@ in a paragraph.</p>
+    <p pm:loop="people">Displaying @{name}@ in a paragraph.</p>
+
+	<p pm:loop="people person">Displaying @{person->name}@ in a paragraph.</p>
 
 ## License
 
