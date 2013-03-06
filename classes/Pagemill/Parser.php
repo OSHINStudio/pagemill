@@ -104,7 +104,7 @@ class Pagemill_Parser {
 		$result = xml_parse($parser, $doctypeWithEntities . $source, true);
 		if (!$result) {
 			$ec = xml_get_error_code($parser);
-			if (($ec == 4 || $ec == 5) && !$this->_xmlDeclString && !$this->_doctypeString) {
+			if (($ec == 4 || $ec == 5 || $ec == 9) && !$this->_xmlDeclString && !$this->_doctypeString) {
 				$this->_namespaces = array();
 				xml_parser_free($parser);
 				$parser = $this->createParser();
