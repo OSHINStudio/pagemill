@@ -12,11 +12,11 @@ class Pagemill_Tag_Choose extends Pagemill_Tag {
 					}
 					$value = $data->parseVariables($expr);
 					if ($value) {
-						$child->process($data, $stream);
+						$child->processInner($data, $stream);
 						return;
 					}
 				} else if ($child->name(false) == 'otherwise') {
-					$child->process($data, $stream);
+					$child->processInner($data, $stream);
 					return;
 				}
 			}
