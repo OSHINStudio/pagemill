@@ -1,9 +1,0 @@
-<ul>
-	<li pm:loop="data key value" pm:if="key !== 'loop_index'">
-		@{key}@ => @{value}@
-		<pm:if expr="!is_scalar(value)">
-			@{data = value}@
-			<pm:recurse head="ul" />
-		</pm:if>
-	</li>
-</ul>
