@@ -205,7 +205,6 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 	private function _processIteration($key, $value, $delimit, $loopTimes) {
 		$n = new Pagemill_Data();
 		$resetKeys = array();
-		$this->_data[$this->_name] = null;
 		$resetKeys[] = $this->_name;
 		if ($this->_as) {
 			$this->_data[$this->_as] = $value;
