@@ -8,7 +8,7 @@ class Pagemill_Tag extends Pagemill_Node {
 	protected $name;
 	protected $attributes;
 	private $_children = array();
-	private $_doctype = '';
+	private $_doctype = null;
 	protected $collapse = true;
 	private $_header;
 	private $_cachedName;
@@ -39,10 +39,19 @@ class Pagemill_Tag extends Pagemill_Node {
 		if ($parent) {
 			$parent->appendChild($this);
 		}
-		$this->_doctype = $doctype;
+		if (is_null($doctype)) {
+			if (!is_null($parent)) {
+				$this->_doctype = $parent->doctype();
+			}
+		} else {
+			$this->_doctype = $doctype;
+		}
 	}
 	public function attachPreprocess(Pagemill_TagPreprocessor $preprocess) {
 		$this->_before[] = $preprocess;
+	}
+	public function hasPreprocessors() {
+		return (count($this->_before) > 0);
 	}
 	public function name($withPrefix = true) {
 		if ( (!$withPrefix) && ($index = strpos($this->name, ':')) !== false ) {
@@ -67,6 +76,15 @@ class Pagemill_Tag extends Pagemill_Node {
 		}
 		return $final;
 	}
+	/**
+	 * Process the tag and its children using the provided data and output the
+	 * result to the provided stream. This method is final because it should
+	 * be guaranteed to handle tag preprocessors and reset the tag to its
+	 * original state. Tags that require special processing should override the
+	 * output() method.
+	 * @param Pagemill_Data $data
+	 * @param Pagemill_Stream $stream
+	 */
 	final public function process(Pagemill_Data $data, Pagemill_Stream $stream) {
 		// Changes made to the tag's name and attributes while processing
 		// output are temporary.
@@ -87,10 +105,37 @@ class Pagemill_Tag extends Pagemill_Node {
 		$this->_before = $this->_cachedBefore;
 		$this->_processing = false;
 	}
+	/**
+	 * Process the tag's children (but not the tag itself).
+	 * @param Pagemill_Data $data
+	 * @param Pagemill_Stream $stream
+	 */
+	final public function processInner(Pagemill_Data $data, Pagemill_Stream $stream) {
+		foreach ($this->children() as $child) {
+			$child->process($data, $stream);
+		}
+	}
+	/**
+	 * Build an attribute string from the tag's attributes. This method will
+	 * evaluate expressions in attribute values.
+	 * @param Pagemill_Data $data
+	 * @return string
+	 */
 	protected function buildAttributeString(Pagemill_Data $data) {
 		$string = '';
 		foreach ($this->attributes as $key => $value) {
 			$string .= ' ' . $key . '="' . $this->doctype()->encodeEntities($data->parseVariables($value)) . '"';
+		}
+		return $string;
+	}
+	/**
+	 * Build a raw attribute string. This method will not evaluate expressions.
+	 * @return string
+	 */
+	protected function buildRawAttributeString() {
+		$string = '';
+		foreach ($this->attributes as $key => $value) {
+			$string .= ' ' . $key . '="' . $this->doctype()->encodeEntities($value) . '"';
 		}
 		return $string;
 	}
@@ -117,13 +162,18 @@ class Pagemill_Tag extends Pagemill_Node {
 			}
 		}
 	}
-	protected function rawOutput(Pagemill_Data $data, Pagemill_Stream $stream) {
+	/**
+	 * Output the content of the tag without processing tags or evaluating
+	 * expressions.
+	 * @param Pagemill_Stream $stream
+	 */
+	protected function rawOutput(Pagemill_Stream $stream) {
 		$stream->puts("<{$this->name()}");
-		$stream->puts($this->buildAttributeString($data));
+		$stream->puts($this->buildRawAttributeString());
 		if (count($this->children())) {
 			$stream->puts(">");
 			foreach ($this->children() as $child) {
-				$child->rawOutput($data, $stream);
+				$child->rawOutput($stream);
 			}
 			$stream->puts("</{$this->name()}>");
 		} else {
@@ -179,6 +229,10 @@ class Pagemill_Tag extends Pagemill_Node {
 	public function removeAttribute($name) {
 		unset($this->attributes[$name]);
 	}
+	/**
+	 * 
+	 * @return Pagemill_Doctype
+	 */
 	public function doctype() {
 		return $this->_doctype;
 	}

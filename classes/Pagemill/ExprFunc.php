@@ -119,4 +119,21 @@ class Pagemill_ExprFunc {
 		ob_end_clean();
 		return $output;
 	}
+	public static function sum($array, $prop) {
+		if ($array instanceof Countable || is_array($array)) {
+			$sum = 0;
+			foreach ($array as $item) {
+				$sum += (isset($item[$prop]) ? $item[$prop] : 0);
+			}
+			return $sum;
+		}
+		return 0;
+	}
+	public static function avg($array, $prop) {
+		if ($array instanceof Countable || is_array($array)) {
+			$sum = self::sum($array, $prop);
+			return $sum / self::count($array);
+		}
+		return 0;
+	}
 }

@@ -41,7 +41,7 @@ class Pagemill_Parser {
 	 */
 	public function parse($source, Pagemill_Doctype $doctype = null) {
 		if (is_null($doctype)) {
-			$doctype = new Pagemill_Doctype('');
+			$doctype = new Pagemill_Doctype('', '');
 		}
 		$this->_doctype = $doctype;
 		$this->_root = null;
@@ -104,7 +104,7 @@ class Pagemill_Parser {
 		$result = xml_parse($parser, $doctypeWithEntities . $source, true);
 		if (!$result) {
 			$ec = xml_get_error_code($parser);
-			if (($ec == 4 || $ec == 5) && !$this->_xmlDeclString && !$this->_doctypeString) {
+			if (($ec == 4 || $ec == 5 || $ec == 9) && !$this->_xmlDeclString && !$this->_doctypeString) {
 				$this->_namespaces = array();
 				xml_parser_free($parser);
 				$parser = $this->createParser();
@@ -138,14 +138,6 @@ class Pagemill_Parser {
 		}
 		throw new Exception('Error #' . $errorCode . ': ' . xml_error_string($errorCode) . " on line {$line}, column {$column}");
 	}
-	private function _declareNamespace($prefix, $uri) {
-		if (isset($this->_namespaces[$prefix])) {
-			throw new Exception("Namespace prefix {$prefix} declared more than once");
-		}
-		$this->_namespaces[$prefix] = $uri;
-		$doctype = Pagemill_Doctype::ForNamespaceUri($uri, $prefix);
-		return $doctype;
-	}
 	private function _xmlStartElement($parser, $name, $attributes) {
 		$last = null;
 		if (count($this->_tagStack)) {
@@ -162,9 +154,9 @@ class Pagemill_Parser {
 		}
 		foreach ($attributes as $k => $v) {
 			if ($k == 'xmlns' || substr($k, 0, 6) == 'xmlns:') {
-				$result = $this->_declareNamespace(substr($k, 6), $v);
-				$currentDoctype->merge($result);
-				if (!$result->keepNamespaceDeclarationInOutput()) {
+				$doctype = Pagemill_Doctype::ForNamespaceUri($v, substr($k, 6));
+				$currentDoctype->merge($doctype);
+				if (!$doctype->keepNamespaceDeclarationInOutput()) {
 					unset($attributes[$k]);
 				}
 			} else if (substr($k, 0, 3) == 'pm:' && !isset($this->_namespaces['pm'])) {
@@ -194,7 +186,20 @@ class Pagemill_Parser {
 		}
 		$this->_tagStack[] = $tag;
 	}
+	private function _nodeIsCombinable(Pagemill_Node $node) {
+		static $combinableClasses = array(
+			'Pagemill_Tag',
+			'Pagemill_Tag_AlwaysExpand',
+			'Pagemill_Tag_NoOutput'
+		);
+		return ( 
+				(in_array(get_class($node), $combinableClasses) && !$node->hasPreprocessors() && strpos($node->name(), ':') === false)
+				|| $node instanceof Pagemill_Node_Text
+				|| $node instanceof Pagemill_Node_Frag
+		);
+	}
 	private function _xmlEndElement($parser, $name) {
+		/* @var Pagemill_Tag */
 		$last = array_pop($this->_tagStack);
 		$last->appendText($this->_currentCharacterData);
 		$this->_currentCharacterData = '';
@@ -204,6 +209,33 @@ class Pagemill_Parser {
 				$cls = $attributeRegistry[$k];
 				$attribute = new $cls($k, $v, $last);
 			}
+		}
+		// Check if children are combinable
+		$combinable = false;
+		if ($last->parent()) {
+			if ($this->_nodeIsCombinable($last)) {
+				$combinable = true;
+				foreach ($last->children() as $child) {
+					if (count($child->children())) {
+						$combinable = false;
+						break;
+					}
+					if (!$this->_nodeIsCombinable($child)) {
+						$combinable = false;
+						break;
+					}
+				}
+			}
+		}
+		if ($combinable) {
+			$frag = new Pagemill_Node_Frag($last->doctype());
+			//foreach ($last->children() as $child) {
+			//	$frag->appendChild($last);
+			//}
+			$frag->appendChild($last);
+			$last->parent()->appendChild($frag);
+			$last->detach();
+			$last = $frag;
 		}
 		if (!count($this->_tagStack)) {
 			$this->_root = $last;

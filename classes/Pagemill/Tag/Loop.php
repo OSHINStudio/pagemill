@@ -66,12 +66,12 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		$this->_as = $as;
 		$this->_asKey = $asKey;
 		$this->_cycle = $cycle;
-		
+		$this->_delimiter = $delimiter;
 		
 		// if name given...
 		if ($name) {
-			$children = $data->get($name);
-			if (is_null($children)) return;
+			$children = $data->evaluate($name);
+			if (is_null($children) || is_scalar($children)) return;
 			if (is_array($children) || $children instanceof Countable) {
 				if (count($children) == 0) return;
 			}
@@ -81,7 +81,10 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				} else if ($children instanceof ArrayObject) {
 					$children = $children->getArrayCopy();
 				} else if (!$children instanceof Iterator) {
-					throw new Exception('Unable to loop over object');
+					// Unrecognized objects throw an exception so developers
+					// can determine whether to modify the object or register
+					// a handler.
+					throw new Exception("Unable to loop over object '{$name}' of class '" . get_class($children) . "'");
 				}
 			}
 			
@@ -101,7 +104,8 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				usort($children, array($this, '_cmp'));
 			}
 			
-			if ($this->hasAttribute('limit')) {
+			$limit = $data->parseVariables($this->getAttribute('limit'));
+			if ($limit) {
 				// We have to do a numeric iteration.
 				$start = null;
 				$end = null;
@@ -111,25 +115,25 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 					$end = $parts[1];
 				} else {
 					$start = 0;
-					$end = $parts[1];
+					$end = $parts[0];
 				}
 				if (is_array($children) || $children instanceof Countable) {
 					if (count($children) < ($end - $start)) {
 						$end = count($children) - $start;
 					}
 				}
-				if (is_array($children)) {
+				if (is_array($children) && isset($children[$start])) {
 					// for $start to $end
 					$loopTimes = $this->_forLimit($children, $start, $end);
 				} else if ($children instanceof SeekableIterator) {
 					// seek to $start and do foreach
 					$loopTimes = $this->_forEachLimit($children, $start, $end);
-				} else if ($children instanceof ArrayAccess) {
+				} else if ($children instanceof ArrayAccess && isset($children[$start])) {
 					// for $start to $end
 					$loopTimes = $this->_forLimit($children, $start, $end);
 				} else {
 					// iterate to lower limit and proccess through upper limit
-					$loopTimes = $this->_forEachLimit($array, $start, $end);
+					$loopTimes = $this->_forEachLimit($children, $start, $end);
 				}
 			} else {
 				$loopTimes = $this->_forEach($children);
@@ -144,7 +148,11 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		$loopTimes = 0;
 		for ($i = $start; $i < $end; $i++) {
 			$delimit = ($i < $end - 1);
-			$this->_processIteration($i, $array[$i], $delimit, $loopTimes);
+			if (isset($array[$i])) {
+				$this->_processIteration($i, $array[$i], $delimit, $loopTimes);
+			} else {
+				break;
+			}
 			$loopTimes++;
 		}
 		return $loopTimes;
@@ -177,6 +185,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				$value = $array->current();
 			}
 			if ($index >= $start) {
+				$delimit = ($index < $end);
 				$this->_processIteration($key, $value, $delimit, $loopTimes);
 			}
 			$index++;
@@ -226,7 +235,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			$child->process($this->_data, $this->_stream);
 		}
 		if ($delimit) {
-			$this->_stream->append($this->_delimiter);
+			$this->_stream->puts($this->_delimiter);
 		}
 		foreach ($resetKeys as $k) {
 			if (isset($this->_originalData[$k])) {

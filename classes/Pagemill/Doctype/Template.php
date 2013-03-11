@@ -1,8 +1,8 @@
 <?php
 class Pagemill_Doctype_Template extends Pagemill_Doctype {
 	public function __construct($nsPrefix) {
+		$this->nsUri = 'http://typeframe.com/pagemill';
 		parent::__construct($nsPrefix);
-		
 		$this->keepNamespaceDeclarationInOutput = false;
 		
 		$this->registerTag('template', 'Pagemill_Tag_Template');
@@ -14,7 +14,8 @@ class Pagemill_Doctype_Template extends Pagemill_Doctype {
 		$this->registerTag('choose', 'Pagemill_Tag_Choose');
 		$this->registerTag('include', 'Pagemill_Tag_Include');
 		$this->registerTag('recurse', 'Pagemill_Tag_Recurse');
-
+		$this->registerTag('eval', 'Pagemill_Tag_Eval');
+		
 		$this->registerAttribute('loop', 'Pagemill_Attribute_Loop');
 		$this->registerAttribute('for-each', 'Pagemill_Attribute_Loop');
 		$this->registerAttribute('checked', 'Pagemill_Attribute_Checked');

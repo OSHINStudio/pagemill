@@ -53,9 +53,9 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		);
 	}
 	public function set($key, $value) {
-		if (is_null($value)) {
-			unset($this->_data[$key]);
-		} else {
+		//if (is_null($value)) {
+		//	unset($this->_data[$key]);
+		//} else {
 			if (self::IsAssoc($value)) {
 				// Convert associative arrays into objects
 				$object = new Pagemill_Data();
@@ -64,13 +64,21 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			} else {
 				$this->_data[$key] = $value;
 			}
+		//}
+	}
+	public function setArray($array) {
+		foreach($array as $key => $value) {
+			$this->set($key, $value);
 		}
 	}
 	public function &get($key) {
 		static $null = null;
-		if ($key == '_tines') {
+		/*if ($key == '_tines') {
 			return $this->_tines;
 		}
+		if ($key == '_handle') {
+			return $this->_handle;
+		}*/
 		if (!isset($this->_data[$key])) {
 			if ($this->_handle) {
 				return $this->_handle->get($key);
@@ -88,17 +96,22 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			$ok = true;
 		}
 		if (is_object($value)) {
-			foreach(self::$_classHandlers as $cls => $func) {
-				if (is_a($value, $cls)) {
-					$value = call_user_func($func, $value);
-					$this->_data[$key] = $value;
-					$ok = true;
-					break;
+			if (get_class($value) == 'stdClass') {
+				$value = (array)$value;
+				$ok = true;
+			} else {
+				foreach(self::$_classHandlers as $cls => $func) {
+					if (is_a($value, $cls)) {
+						$value = call_user_func($func, $value);
+						$this->_data[$key] = $value;
+						$ok = true;
+						break;
+					}
 				}
 			}
 		}
 		if (!$ok) {
-			throw new Exception("Unable to process object of type " . get_class($value));
+			throw new Exception("Unable to process object in variable '{$key}' of class '" . get_class($value) . "'");
 		}
 		// Convert integer 0 to string because arbitrary strings == 0
 		//if ($value === 0) $value = '0';
@@ -118,7 +131,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		static $additional_operators = array('LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=', 'EQ' => '==', 'NE' => '!=');
 
 		// decode the given expression
-		//$expression = html_entity_decode($expression);
+		$expression = html_entity_decode($expression);
 		// if this expression is not in our cache yet, compile and cache it
 		if (!isset(self::$_compiled[$expression])) {
 			// first step: validate expression tokens and determine if "is mutator"
@@ -146,7 +159,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 						$brackets--;
 					}
 					if (!in_array($token, $permitted_chars)) {
-						trigger_error("Invalid operator $token.");
+						trigger_error("Invalid operator $token ({$expression})");
 						return $defaultBlank;
 					}
 					if ('=' == $token) {
@@ -301,7 +314,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		$result = self::_Evaluate($this, $compiled);
 		return $result;
 	}
-	public function parseVariables($text) {
+	public function parseVariables($text, Pagemill_Doctype $encoder = null) {
 		$result = $text;
 		preg_match_all('/@{([\w\W\s\S]*?)}@/i', $text, $matches);
 		foreach ($matches[0] as $index => $container) {
@@ -320,7 +333,32 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 					$evaluated = '(Unknown)';
 				}
 			}
+			if ($encoder) {
+				$evaluated = $encoder->encodeEntities($evaluated);
+			}
 			$result = str_replace($container, $evaluated, $result);
+		}
+		preg_match_all('/#{([\w\W\s\S]*?)}#/i', $result, $matches);
+		foreach ($matches[0] as $index => $container) {
+			$expression = $matches[1][$index];
+			$evaluated = $this->evaluate($expression);
+			if (!is_null($evaluated) && !is_scalar($evaluated)) {
+				if (is_array($evaluated)) {
+					$evaluated = self::IsAssoc($evaluated) ? '(Object)' : '(Array)';
+				} else if (is_a($evaluated, 'Pagemill_Data')) {
+					$evaluated = '(Object)';
+				} else if (Pagemill_Data::LikeArray($evaluated)) {
+					$evaluated = '(ArrayInterface)';
+				} else if (Pagemill_Data::LikeAssoc($evaluated)) {
+					$evaluated = '(Interface)';
+				} else {
+					$evaluated = '(Unknown)';
+				}
+			}
+			if ($encoder) {
+				$evaluated = $encoder->encodeEntities($evaluated);
+			}
+			$result = str_replace($container, '@{' . $evaluated . '}@', $result);
 		}
 		return $result;
 	}
@@ -456,15 +494,28 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 				$node->sortNodes($args);
 		}
 	}
+	/**
+	 * Create a data fork. The Pagemill can use forks to modify data within a
+	 * limited scope while leaving the parent scope intact.
+	 * @return \Pagemill_Data
+	 */
 	public function fork() {
 		$forked = new Pagemill_Data();
 		$forked->_handle = $this;
 		$this->_tines[] = $forked;
 		return $forked;
 	}
+	/**
+	 * Get the parent of a forked data object.
+	 * @return Pagemill_Data|null
+	 */
 	public function handle() {
 		return $this->_handle;
 	}
+	/**
+	 * Get an array of data objects forked from this one.
+	 * @return Pagemill_Data[]
+	 */
 	public function tines() {
 		return $this->_tines;
 	}
@@ -479,7 +530,8 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	}
 }
 
-// Add built-in expression functions to Pagemill_Data
+
+// Add built-in expression functions
 Pagemill_Data::RegisterExprFunc('abs',										'abs');
 Pagemill_Data::RegisterExprFunc('addslashes',								'addslashes');
 Pagemill_Data::RegisterExprFunc(array('ceil', 'ceiling'),					'ceil');
@@ -518,3 +570,5 @@ Pagemill_Data::RegisterExprFunc(array('date', 'format_date'),				'Pagemill_ExprF
 Pagemill_Data::RegisterExprFunc('json_encode',								'Pagemill_ExprFunc::json_encode');
 Pagemill_Data::RegisterExprFunc('pluralize',								'Pagemill_ExprFunc::pluralize');
 Pagemill_Data::RegisterExprFunc('var_dump',                                 'Pagemill_ExprFunc::var_dump');
+Pagemill_Data::RegisterExprFunc('sum',                                     'Pagemill_ExprFunc::sum');
+Pagemill_Data::RegisterExprFunc('avg',                                     'Pagemill_ExprFunc::avg');

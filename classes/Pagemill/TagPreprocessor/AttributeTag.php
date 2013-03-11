@@ -4,7 +4,7 @@ class Pagemill_TagPreprocessor_AttributeTag extends Pagemill_TagPreprocessor {
 	public function __construct(Pagemill_Tag_AttributeTag $attributeTag) {
 		$this->_attributeTag = $attributeTag;
 	}
-	public function process(Pagemill_Tag $tag, Pagemill_Data $data) {
+	public function process(\Pagemill_Tag $tag, \Pagemill_Data $data, \Pagemill_Stream $stream) {
 		$stream = new Pagemill_Stream(true);
 		$this->_attributeTag->outputForAttribute($data, $stream);
 		$value = $stream->peek();
