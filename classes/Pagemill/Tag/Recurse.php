@@ -23,7 +23,8 @@ class Pagemill_Tag_Recurse extends Pagemill_Tag {
 			throw new Exception("Recurse tag requires a loop to process");
 		}
 		$parent = clone $parent;
-		$context = $loop->currentContext();
+		//$context = $loop->currentContext();
+		$context = $data;
 		$parent->process($context, $stream);
 	}
 }
