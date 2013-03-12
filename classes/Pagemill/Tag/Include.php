@@ -11,8 +11,12 @@ class Pagemill_Tag_Include extends Pagemill_Tag {
 		} else {
 			$tree = self::$_includeCache[$file];
 		}
+		// Unlike most tags, we don't want to use append/detach here
+		// because the tree might be a fragment.
 		//$this->appendChild($tree);
+		$tree->parent = $this->parent;
 		$tree->process($data, $stream);
 		//$tree->detach();
+		$tree->parent = null;
 	}
 }
