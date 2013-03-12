@@ -66,7 +66,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 			}
 		//}
 	}
-	public function setArray($array) {
+	public function setArray(array $array) {
 		foreach($array as $key => $value) {
 			$this->set($key, $value);
 		}
