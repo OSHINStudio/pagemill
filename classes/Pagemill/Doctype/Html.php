@@ -18,6 +18,7 @@ class Pagemill_Doctype_Html extends Pagemill_Doctype {
 		$this->registerTag('select', 'Pagemill_Tag_Html_Select');
 		$this->registerTag('span', 'Pagemill_Tag_AlwaysExpand');
 		$this->registerTag('strong', 'Pagemill_Tag_AlwaysExpand');
+		$this->registerTag('textarea', 'Pagemill_Tag_AlwaysExpand');
 		$this->registerTag('title', 'Pagemill_Tag_AlwaysExpand');
 
 		$this->addEntityArray(get_html_translation_table(HTML_ENTITIES, ENT_COMPAT, 'UTF-8'));
