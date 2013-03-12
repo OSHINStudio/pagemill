@@ -537,7 +537,7 @@ Pagemill_Data::RegisterExprFunc('addslashes',								'addslashes');
 Pagemill_Data::RegisterExprFunc(array('ceil', 'ceiling'),					'ceil');
 Pagemill_Data::RegisterExprFunc('explode',									'explode');
 Pagemill_Data::RegisterExprFunc('floor',									'floor');
-Pagemill_Data::RegisterExprFunc('implode',									'implode');
+Pagemill_Data::RegisterExprFunc('implode',									'Pagemill_ExprFunc::implode');
 Pagemill_Data::RegisterExprFunc('in_array',									'in_array');
 Pagemill_Data::RegisterExprFunc('is_array',									'is_array');
 Pagemill_Data::RegisterExprFunc(array('is_bool', 'is_boolean'),				'is_bool');

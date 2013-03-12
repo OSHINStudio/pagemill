@@ -136,4 +136,8 @@ class Pagemill_ExprFunc {
 		}
 		return 0;
 	}
+	public static function implode($delimiter, $array) {
+		if (!is_array($array)) return null;
+		return implode($delimiter, $array);
+	}
 }
