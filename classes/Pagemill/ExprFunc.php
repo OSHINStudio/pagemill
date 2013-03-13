@@ -140,4 +140,8 @@ class Pagemill_ExprFunc {
 		if (!is_array($array)) return null;
 		return implode($delimiter, $array);
 	}
+	public static function in_array($needle, $haystack) {
+		if (!is_array($haystack)) return false;
+		return in_array($needle, $haystack);
+	}
 }

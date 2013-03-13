@@ -24,7 +24,7 @@ class Pagemill_Tag_Recurse extends Pagemill_Tag {
 		}
 		$parent = clone $parent;
 		//$context = $loop->currentContext();
-		$context = $data;
+		$context = clone $data;
 		$parent->process($context, $stream);
 	}
 }
