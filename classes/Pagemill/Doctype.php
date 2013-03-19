@@ -197,3 +197,4 @@ Pagemill_Doctype::RegisterNamespaceUri('http://typeframe.com/pagemill', 'Pagemil
 Pagemill_Doctype::RegisterDoctype('text', 'Pagemill_Doctype_Text');
 Pagemill_Doctype::RegisterFileExtension('txt', 'Pagemill_Doctype_Text');
 Pagemill_Doctype::RegisterFileExtension('csv', 'Pagemill_Doctype_Text');
+Pagemill_Doctype::RegisterFileExtension('js', 'Pagemill_Doctype_Text');
