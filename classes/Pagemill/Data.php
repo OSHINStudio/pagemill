@@ -291,7 +291,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 					}
 				}
 			}
-			$compiled = implode('', $compiled);
+			$compiled = implode(' ', $compiled);
 			$compiled = (($isMutator ? '' : 'return ') . $compiled . ';');
 			self::$_compiled[$expression] = $compiled;
 			// Returning here saves an array lookup.
