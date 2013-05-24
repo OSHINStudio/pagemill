@@ -6,7 +6,18 @@
  * elements).
  */
 class Pagemill_SimpleXmlElement extends SimpleXMLElement {
-	private $_defaultNamespace;
+	/**
+	 * Get or set the element's default namespace.
+	 * @param string $ns The default namespace to set
+	 * @return string|null The default namespace or null if none was set
+	 */
+	private function _defaultNamespace($ns = null) {
+		static $defaultNamespace = null;
+		if (!is_null($ns)) {
+			$defaultNamespace = $ns;
+		}
+		return $defaultNamespace;
+	}
 	/**
 	 * Return a string containing the element's inner XML. Similar to the
 	 * innerHTML function in browser DOM interfaces.
@@ -114,7 +125,7 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 		//$xml->_registerNamespaces();
 		libxml_use_internal_errors($previous);
 		if ($xml) {
-			$xml->_defaultNamespace = $defaultNamespace;
+			$xml->_defaultNamespace($defaultNamespace);
 		}
 		return $xml;
 	}
@@ -175,8 +186,8 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 	}
 	public function asXml($filename = null) {
 		$xml = parent::asXml();
-		if ($this->_defaultNamespace) {
-			$xml = self::_InsertNamespace($this->_defaultNamespace, $xml);
+		if ($this->_defaultNamespace()) {
+			$xml = self::_InsertNamespace($this->_defaultNamespace(), $xml);
 		}
 		if ($filename) {
 			$result = file_put_contents($filename, $xml);
