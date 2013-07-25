@@ -212,10 +212,18 @@ class Pagemill_Tag extends Pagemill_Node {
 	}
 	public function appendText($text) {
 		if ($text !== '') {
-			$node = new Pagemill_Node_Text($this->_doctype);
+			$node = new Pagemill_Node_Text($this->doctype());
 			$node->appendText($text);
 			$this->appendChild($node);
 		}
+	}
+	public function replaceChild(Pagemill_Node $child, Pagemill_Node $replacement) {
+		$index = array_search($child, $this->_children, true);
+		if ($index === false) {
+			throw new Exception('Child does not exist in node');
+		}
+		array_splice($this->_children, $index, 1, array($replacement));
+		$replacement->_parent = $this;
 	}
 	public function getAttribute($name) {
 		return (isset($this->attributes[$name]) ? $this->attributes[$name] : null);
@@ -234,6 +242,11 @@ class Pagemill_Tag extends Pagemill_Node {
 	 * @return Pagemill_Doctype
 	 */
 	public function doctype() {
+		if (is_null($this->_doctype)) {
+			if ($this->parent()) {
+				return $this->parent()->doctype();
+			}
+		}
 		return $this->_doctype;
 	}
 	public function header($text) {
