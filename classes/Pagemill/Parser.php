@@ -104,17 +104,16 @@ class Pagemill_Parser {
 		$result = xml_parse($parser, $doctypeWithEntities . $source, true);
 		if (!$result) {
 			$ec = xml_get_error_code($parser);
-			// TODO: Unfortunately, this error code check is unreliable in at
-			// least one environment we support. We have not determined if the
-			// problem is with the version of the XML library or PHP itself
-			// (in this case, 5.3.10). In the meantime, the test is disabled.
-			//if (($ec == 4 || $ec == 5 || $ec == 9) && !$this->_xmlDeclString && !$this->_doctypeString) {
+			// PHP 5.3.10 returns less granular error codes with syntax errors
+			// being more common, so always assume a second attempt should be
+			// performed for <= 5.3.10.
+			if (version_compare(phpversion(), '5.3.10') < 1 || (($ec == 4 || $ec == 5 || $ec == 9) && !$this->_xmlDeclString && !$this->_doctypeString)) {
 				$this->_namespaces = array();
 				xml_parser_free($parser);
 				$parser = $this->createParser();
 				$ignoreBytes = strlen('<pm:template xmlns:pm="http://typeframe.com/pagemill">');
 				$result = xml_parse($parser, $doctypeWithEntities . '<pm:template xmlns:pm="http://typeframe.com/pagemill">' . $source . '</pm:template>', true);
-			//}
+			}
 		}
 		if (!$result) {
 			$line = xml_get_current_line_number($parser) - $ignoreLines;
