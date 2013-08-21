@@ -129,6 +129,12 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 		}
 		return $xml;
 	}
+	public static function LoadHtml($string) {
+		$doc = new DOMDocument();
+		$doc->loadHTML(self::_ConvertUtf8ToXmlEntities($string));
+		$xml = simplexml_import_dom($doc, 'Pagemill_SimpleXmlElement');
+		return $xml;
+	}
 	protected static function _InsertNamespace($namespace, $string) {
 		$skip = '';
 		preg_match('/<\?xml[\w\W\s\S]*?\?>/', $string, $matches);
