@@ -23,7 +23,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		if (!is_array($value) || empty($value)) return false;
 		if (!is_int(key($value))) return true;
 		//return (0 !== count(array_diff_key($value, array_keys($value))));
-		array_diff_key($value, array_keys(array_keys($value)));
+		return (count(array_diff_key($value, array_keys(array_keys($value)))) != 0);
 	}
 	/**
 	 * Determine if a value is either an associative array (IsAssoc()) or it
