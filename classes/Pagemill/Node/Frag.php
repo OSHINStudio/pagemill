@@ -11,6 +11,9 @@ class Pagemill_Node_Frag extends Pagemill_Node {
 	public function appendText($text) {
 		$this->_text .= $this->doctype->encodeEntities($text);
 	}
+	public function appendRawText($text) {
+		$this->_text .= $text;
+	}
 	protected function output(Pagemill_Data $data, Pagemill_Stream $stream, $encode = true) {
 		if ($encode) {
 			$stream->puts($data->parseVariables($this->_text, $this->doctype));
@@ -31,5 +34,8 @@ class Pagemill_Node_Frag extends Pagemill_Node {
 	}
 	public function children() {
 		return array();
+	}
+	public function text() {
+		return $this->_text;
 	}
 }
