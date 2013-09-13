@@ -68,10 +68,10 @@ class Pagemill_Parser {
 			//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
 			//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
 			if (strpos($this->_doctypeString, '[') === false) {
-				$ents = " [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
-				$source = substr($source, 0, strlen($matches[0]) - 1) . $ents . substr($source, strlen($matches[0]));
-				$ignoreLines = 3;
-				$ignoreBytes = strlen($ents);
+				//$ents = " [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
+				//$source = substr($source, 0, strlen($matches[0]) - 1) . $ents . substr($source, strlen($matches[0]));
+				//$ignoreLines = 3;
+				//$ignoreBytes = strlen($ents);
 			}
 		}
 		if (!$doctypeFromSource && get_class($this->_doctype) == 'Pagemill_Doctype') {
@@ -79,15 +79,10 @@ class Pagemill_Parser {
 			if (preg_match('/<([a-z0-9\-_]+)/i', $source, $matches)) {
 				$doctype = $matches[1];
 				$this->_doctype = Pagemill_Doctype::ForDoctype($matches[1]);
-				//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
-				//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
 				if ($this->_doctype->entities()) {
 					$doctypeWithEntities = "<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
 					$ignoreLines = 3;
 				}
-				//if ($this->_doctype->entities()) {
-				//	$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
-				//}
 			}
 		} else if (!$doctypeFromSource) {
 			if ($this->_doctype->entities()) {
@@ -190,6 +185,7 @@ class Pagemill_Parser {
 		$this->_tagStack[] = $tag;
 	}
 	private function _nodeIsCombinable(Pagemill_Node $node) {
+		return false;
 		static $combinableClasses = array(
 			'Pagemill_Tag',
 			'Pagemill_Tag_AlwaysExpand',
