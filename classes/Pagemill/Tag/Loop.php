@@ -10,7 +10,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 	private $_delimiter;
 	private $_originalData;
 	private $_sortKey;
-	
+	private static $_pointer = '';
 	/**
 	 * The sort callback.
 	 */
@@ -37,6 +37,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		return 0;
 	}
 	public function output(Pagemill_Data $data, Pagemill_Stream $stream) {
+		$oldPointer = self::$_pointer;
 		$cycle = $data->parseVariables($this->getAttribute('cycle'));
 		if ($cycle) {
 			$cycle = explode(',', $data->parseVariables($this->getAttribute('cycle')));
@@ -75,6 +76,8 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			if (is_array($children) || $children instanceof Countable) {
 				if (count($children) == 0) return;
 			}
+			self::$_pointer .= '[' . $name . ']';
+			$data->set('pointer', self::$_pointer);
 			if (!is_array($children)) {
 				if (is_a($children, 'Pagemill_Data')) {
 					$children = $children->getArray();
@@ -138,6 +141,8 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			} else {
 				$loopTimes = $this->_forEach($children);
 			}
+			self::$_pointer = $oldPointer;
+			$data->set('pointer', self::$_pointer);
 		}
 		if ($times) {
 			$start = $loopTimes;
@@ -149,7 +154,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		for ($i = $start; $i < $end; $i++) {
 			$delimit = ($i < $end - 1);
 			if (isset($array[$i])) {
-				$this->_processIteration($i, $array[$i], $delimit, $loopTimes);
+				$this->processIteration($i, $array[$i], $delimit, $loopTimes);
 			} else {
 				break;
 			}
@@ -166,7 +171,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		foreach ($array as $key => $value) {
 			// A foreach loop cannot delimit if the object is not countable
 			$delimit = (!is_null($count) && $count > $loopTimes + 1);
-			$this->_processIteration($key, $value, $delimit, $loopTimes);
+			$this->processIteration($key, $value, $delimit, $loopTimes);
 			$loopTimes++;
 		}
 		return $loopTimes;
@@ -186,7 +191,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 			}
 			if ($index >= $start) {
 				$delimit = ($index < $end);
-				$this->_processIteration($key, $value, $delimit, $loopTimes);
+				$this->processIteration($key, $value, $delimit, $loopTimes);
 			}
 			$index++;
 			if (!is_null($end) && $index >= $end) {
@@ -199,10 +204,13 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 	private function _forTimes($start, $end) {
 		for ($i = $start; $i < $end; $i++) {
 			$delimit = ($i < $end - 1);
-			$this->_processIteration($i, $this->_data, $delimit, $i);
+			$this->processIteration($i, $this->_data, $delimit, $i);
 		}
 	}
-	private function _processIteration($key, $value, $delimit, $loopTimes) {
+	protected function processIteration($key, $value, $delimit, $loopTimes) {
+		$oldPointer = self::$_pointer;
+		self::$_pointer .= '[' . $key . ']';
+		$this->_data->set('pointer', self::$_pointer);
 		$n = new Pagemill_Data();
 		$resetKeys = array();
 		$resetKeys[] = $this->_name;
@@ -243,5 +251,10 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				unset($this->_data[$k]);
 			}
 		}
-	}	
+		self::$_pointer = $oldPointer;
+		$this->_data->set('pointer', self::$_pointer);
+	}
+	public static function Pointer() {
+		return self::$_pointer;
+	}
 }
