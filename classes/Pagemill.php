@@ -42,9 +42,9 @@ class Pagemill {
 				$loop[$key] = array();
 				$loop =& $loop[$key];
 			} else {
-				if (!is_array($loop[$key])) {
+				/*if (!is_array($loop[$key])) {
 					throw new Exception("Loops can only be added to arrays.");
-				}
+				}*/
 				$loop =& $loop[$key];
 			}
 		}
