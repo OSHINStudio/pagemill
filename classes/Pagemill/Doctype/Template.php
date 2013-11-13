@@ -15,6 +15,7 @@ class Pagemill_Doctype_Template extends Pagemill_Doctype {
 		$this->registerTag('include', 'Pagemill_Tag_Include');
 		$this->registerTag('recurse', 'Pagemill_Tag_Recurse');
 		$this->registerTag('eval', 'Pagemill_Tag_Eval');
+		$this->registerTag('element', 'Pagemill_Tag_Element');
 		
 		$this->registerAttribute('loop', 'Pagemill_Attribute_Loop');
 		$this->registerAttribute('for-each', 'Pagemill_Attribute_Loop');
