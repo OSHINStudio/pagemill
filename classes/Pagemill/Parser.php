@@ -187,6 +187,7 @@ class Pagemill_Parser {
 		$this->_tagStack[] = $tag;
 	}
 	private function _nodeIsCombinable(Pagemill_Node $node) {
+		return false;
 		static $combinableClasses = array(
 			'Pagemill_Tag',
 			'Pagemill_Tag_AlwaysExpand',
