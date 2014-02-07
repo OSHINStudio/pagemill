@@ -9,7 +9,8 @@ class Pagemill_TagPreprocessor_AttributeTag extends Pagemill_TagPreprocessor {
 		$this->_attributeTag->outputForAttribute($data, $stream);
 		$value = $stream->peek();
 		if ($value !== '') {
-			$tag->setAttribute($this->_attributeTag->getAttribute('name'), $value);
+			$value = html_entity_decode($value);
+			$tag->setAttribute($this->_attributeTag->getAttribute('name'), trim($value));
 		}
 	}
 }
