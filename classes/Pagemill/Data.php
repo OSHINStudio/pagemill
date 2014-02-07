@@ -2,7 +2,7 @@
 /**
  * Pagemill data container
  */
-class Pagemill_Data implements ArrayAccess, Iterator {
+class Pagemill_Data implements ArrayAccess, Iterator, Countable {
 	private $_data = array();
 	private static $_compiled = array();
 	private $_iteratorPos = -1;
@@ -20,10 +20,19 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 	 * @return boolean
 	 */
 	public static function IsAssoc($value) {
+		//if (!is_array($value)) return false;
+		//return (bool)count(array_filter(array_keys($value), 'is_string'));;
 		if (!is_array($value) || empty($value)) return false;
 		if (!is_int(key($value))) return true;
 		//return (0 !== count(array_diff_key($value, array_keys($value))));
-		array_diff_key($value, array_keys(array_keys($value)));
+		return (count(array_diff_key($value, array_keys(array_keys($value)))) != 0);
+	}
+	public function count() {
+		if (is_array($this->_data) && !self::IsAssoc($this->_data)) {
+			return count($this->_data);
+		} else {
+			return null;
+		}
 	}
 	/**
 	 * Determine if a value is either an associative array (IsAssoc()) or it
@@ -127,7 +136,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 		static $permitted_tokens = array('T_STRING', 'T_CONSTANT_ENCAPSED_STRING', 'T_LNUMBER', 'T_DNUMBER', 'T_IS_EQUAL',
 											'T_IS_GREATER_OR_EQUAL', 'T_IS_NOT_EQUAL', 'T_IS_SMALLER_OR_EQUAL', 'T_BOOLEAN_AND',
 											'T_BOOLEAN_OR', 'T_WHITESPACE', 'T_VARIABLE', 'T_CLASS', 'T_OBJECT_OPERATOR',
-											'T_LOGICAL_AND', 'T_LOGICAL_OR', 'T_IS_IDENTICAL', 'T_IS_NOT_IDENTICAL');
+											'T_LOGICAL_AND', 'T_LOGICAL_OR', 'T_IS_IDENTICAL', 'T_IS_NOT_IDENTICAL', 'T_DEFAULT');
 		static $additional_operators = array('LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=', 'EQ' => '==', 'NE' => '!=');
 
 		// decode the given expression
@@ -291,7 +300,7 @@ class Pagemill_Data implements ArrayAccess, Iterator {
 					}
 				}
 			}
-			$compiled = implode('', $compiled);
+			$compiled = implode(' ', $compiled);
 			$compiled = (($isMutator ? '' : 'return ') . $compiled . ';');
 			self::$_compiled[$expression] = $compiled;
 			// Returning here saves an array lookup.
@@ -572,3 +581,4 @@ Pagemill_Data::RegisterExprFunc('pluralize',								'Pagemill_ExprFunc::pluraliz
 Pagemill_Data::RegisterExprFunc('var_dump',                                 'Pagemill_ExprFunc::var_dump');
 Pagemill_Data::RegisterExprFunc('sum',                                     'Pagemill_ExprFunc::sum');
 Pagemill_Data::RegisterExprFunc('avg',                                     'Pagemill_ExprFunc::avg');
+Pagemill_Data::RegisterExprFunc('ucwords',                                 'Pagemill_ExprFunc::uc_words');
