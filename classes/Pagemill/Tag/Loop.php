@@ -115,7 +115,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 				$parts = explode(',', $data->parseVariables($this->getAttribute('limit')));
 				if (count($parts) == 2) {
 					$start = $parts[0];
-					$end = $parts[1];
+					$end = $parts[0] + $parts[1];
 				} else {
 					$start = 0;
 					$end = $parts[0];
