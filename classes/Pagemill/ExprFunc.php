@@ -144,4 +144,7 @@ class Pagemill_ExprFunc {
 		if (!is_array($haystack)) return false;
 		return in_array($needle, $haystack);
 	}
+	public static function uc_words($str) {
+		return ucwords($str);
+	}
 }
