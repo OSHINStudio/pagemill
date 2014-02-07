@@ -73,7 +73,7 @@ class Pagemill_Tag_Loop extends Pagemill_Tag {
 		if ($name) {
 			$children = $data->evaluate($name);
 			if (is_null($children) || is_scalar($children)) return;
-			if (is_array($children) || $children instanceof Countable) {
+			if (!is_a($children, 'Pagemill_Data') && (is_array($children) || $children instanceof Countable)) {
 				if (count($children) == 0) return;
 			}
 			self::$_pointer .= '[' . $name . ']';
