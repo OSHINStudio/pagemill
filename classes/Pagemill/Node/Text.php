@@ -28,4 +28,7 @@ class Pagemill_Node_Text extends Pagemill_Node {
 	public function children() {
 		return array();
 	}
+	public function text() {
+		return $this->_text;
+	}
 }

@@ -12,6 +12,7 @@ class Pagemill_Doctype_Html extends Pagemill_Doctype {
 		$this->registerTag('em', 'Pagemill_Tag_AlwaysExpand');
 		$this->registerTag('head', 'Pagemill_Tag_AlwaysExpand');
 		$this->registerTag('i', 'Pagemill_Tag_AlwaysExpand');
+		$this->registerTag('iframe', 'Pagemill_Tag_AlwaysExpand');
 		$this->registerTag('option', 'Pagemill_Tag_Html_Option');
 		$this->registerTag('p', 'Pagemill_Tag_AlwaysExpand');
 		$this->registerTag('script', 'Pagemill_Tag_Html_Script');
