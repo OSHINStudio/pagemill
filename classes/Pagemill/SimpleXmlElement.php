@@ -131,7 +131,7 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 	}
 	public static function LoadHtml($string) {
 		$doc = new DOMDocument();
-		$doc->loadHTML(self::_ConvertUtf8ToXmlEntities($string));
+		$doc->loadHTML($string);
 		$xml = simplexml_import_dom($doc, 'Pagemill_SimpleXmlElement');
 		return $xml;
 	}
