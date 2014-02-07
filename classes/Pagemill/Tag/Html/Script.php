@@ -6,7 +6,9 @@ class Pagemill_Tag_Html_Script extends Pagemill_Tag {
 		if ($this->children()) {
 			$stream->puts(">/*<![CDATA[*/\n");
 			foreach ($this->children() as $child) {
-				$child->process($data, $stream, false);
+				$tmp = new Pagemill_Stream(true);
+				$child->process($data, $tmp);
+				$stream->puts(html_entity_decode($tmp->clean()));
 			}
 			$stream->puts("\n/*]]>*/");
 		} else {
