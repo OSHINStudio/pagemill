@@ -74,7 +74,7 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	 * @param string $class The name of the Pagemill_Attribute class that will
 	 * process the attribute.
 	 */
-	protected function registerAttribute($attribute, $class) {
+	public function registerAttribute($attribute, $class) {
 		if (substr($attribute, 0, 1) == '/') {
 			$attribute = substr($attribute, 1);
 		} else {
