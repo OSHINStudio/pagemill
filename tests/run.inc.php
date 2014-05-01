@@ -124,6 +124,45 @@ class TestOfPagemillDoctype extends UnitTestCase {
 	}
 }
 
+
 class TestOfPagemillData extends UnitTestCase {
-	
+	public function testEvaluateVariable() {
+		$data = new Pagemill_Data();
+		$data['foo'] = 'bar';
+		$this->assertTrue($data->evaluate('foo') == 'bar', 'Data variable was not evaluated correctly');
+		$this->assertTrue($data->parseVariables('bar == @{foo}@') == 'bar == bar', 'Data variable in code was not evaluated correctly');
+	}
+	public function testEvaluateMath() {
+		$data = new Pagemill_Data();
+		$this->assertTrue($data->evaluate('1 + 1') == '2', 'Mathematical expression was not evaluated correctly');
+		$this->assertTrue($data->parseVariables('@{1 + 1}@ == 2') == '2 == 2', 'Mathematical expression in code was not evaluated correctly');
+	}
+	public static function ExampleFunction() {
+		return 'bar';
+	}
+	public function testRegisterAndEvaluateFunction() {
+		Pagemill_Data::RegisterExprFunc('foo', 'TestofPagemillData::ExampleFunction');
+		$data = new Pagemill_Data();
+		$this->assertTrue($data->evaluate('foo()') == 'bar', 'Registered function was not evaluated correctly');
+		$this->assertTrue($data->parseVariables('@{foo()}@ == bar') == 'bar == bar', 'Registered function in code was not evaluated correctly');
+	}
+	public function testForkInheritsParentValues() {
+		$data = new Pagemill_Data();
+		$data['foo'] = 'bar';
+		$fork = $data->fork();
+		$this->assertTrue($fork['foo'] == 'bar', 'Fork did not inherit parent data');
+	}
+	public function testForkHasLocalScope() {
+		$data = new Pagemill_Data();
+		$fork = $data->fork();
+		$fork['foo'] = 'bar';
+		$this->assertFalse(isset($data['foo']), 'Value in fork\'s local scope bled into its parent');
+	}
+	public function testForkValueDoesNotChangeParentValue() {
+		$data = new Pagemill_Data();
+		$data['foo'] = 'bar';
+		$fork = $data->fork();
+		$fork['foo'] = 'baz';
+		$this->assertFalse($data['foo'] == 'baz', 'Modified value in fork changed value in parent');
+	}
 }

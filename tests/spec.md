@@ -7,9 +7,9 @@ An extension of PHP's SimpleXMLElement with features to simplify parsing of Page
 * Automatically declare the Pagemill namespace if undeclared pm:* tags exist.
   Unlike the Parser, SimpleXmlElement does not inject the Pagemill namespace for expressions (@{foo}@).
   TestOfPagemillSimpleXmlElement::testPagemillNamespaceDeclaration
-* ::LoadHtml() parses unbalanced HTML into well-formed XML.
+* LoadHtml() parses unbalanced HTML into well-formed XML.
   TestOfPagemillSimpleXmlElement::testLoadUnbalancedHtmlElement
-* ::LoadHtml() parses HTML with undefined entities (e.g., bare ampersands) into well-formed XML.
+* LoadHtml() parses HTML with undefined entities (e.g., bare ampersands) into well-formed XML.
   TestOfPagemillSimpleXmlElement::testLoadUndefinedHtmlEntity
 * Convert well-formed fragments into Pagemill templates.
   TestOfPagemillSimpleXmlElement::testConversionOfFragment
@@ -40,3 +40,15 @@ The class that builds a tree of tags from an XML document.
 
 ## Pagemill_Data
 
+* Evaluate a variable.
+  TestOfPagemillData::testEvaluateVariable
+* Evaluate a mathematical expression.
+  TestOfPagemillData::testEvaluateMath
+* Register and evaluate a function.
+  TestOfPagemillData::testRegisterAndEvaluateFunction
+* Fork inherits parent values.
+  TestOfPagemillData::testForkInheritsParentValues
+* Adding a value to a tine does not add it to the parent.
+  TestOfPagemillData::testForkHasLocalScope
+* Modifying a parent's value in the tine modifies it in the parent.
+  TestOfPagemillData::testForkValueDoesNotChangeParentValue
