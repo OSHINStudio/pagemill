@@ -19,11 +19,13 @@ class Pagemill_Parser {
 		foreach ($entities as $k => $v) {
 			// Solution found at http://us3.php.net/ord (darien at etelos dot com 19-Jan-2007 12:27).
 			$kbe = mb_convert_encoding($k, 'UCS-4BE', 'UTF-8');
+			$result = '';
 			for ($i = 0; $i < mb_strlen($kbe, 'UCS-4BE'); ++$i) {
 				$kbe2      = mb_substr($kbe, $i, 1, 'UCS-4BE');
 				$ord       = unpack('N', $kbe2);
-				$code .= sprintf('<!ENTITY %s "&#%s;">', substr($v, 1, -1), $ord[1]);
+				$result .= "&#{$ord[1]};";
 			}
+			$code .= sprintf('<!ENTITY %s "%s">', substr($v, 1, -1), $result);
 		}
 		return $code;
 	}
@@ -40,8 +42,11 @@ class Pagemill_Parser {
 	 * @return Pagemill_Tag
 	 */
 	public function parse($source, Pagemill_Doctype $doctype = null) {
+		$explicit_doctype = false;
 		if (is_null($doctype)) {
 			$doctype = new Pagemill_Doctype('', '');
+		} else {
+			$explicit_doctype = true;
 		}
 		$this->_doctype = $doctype;
 		$this->_root = null;
@@ -60,40 +65,48 @@ class Pagemill_Parser {
 		$doctypeWithEntities = '';
 		// Check for a doctype
 		$doctypeFromSource = '';
-		if (preg_match('/^[\s\S]*?<\!DOCTYPE +([\w\W\s\S]*?)>/', $source, $matches)) {
-			$this->_doctypeString = trim($matches[0]);
-			$parts = explode(' ', trim($matches[1]));
-			$doctypeFromSource = trim($parts[0]);
-			$this->_doctype = Pagemill_Doctype::ForDoctype($doctypeFromSource);
-			//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
-			//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
-			if (strpos($this->_doctypeString, '[') === false) {
-				$ents = " [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
-				$source = substr($source, 0, strlen($matches[0]) - 1) . $ents . substr($source, strlen($matches[0]));
-				$ignoreLines = 3;
-				$ignoreBytes = strlen($ents);
-			}
-		}
-		if (!$doctypeFromSource && get_class($this->_doctype) == 'Pagemill_Doctype') {
-			// No doctype detected. Try the root element
-			if (preg_match('/<([a-z0-9\-_]+)/i', $source, $matches)) {
-				$doctype = $matches[1];
-				$this->_doctype = Pagemill_Doctype::ForDoctype($matches[1]);
-				//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
-				//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
-				if ($this->_doctype->entities()) {
-					$doctypeWithEntities = "<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
-					$ignoreLines = 3;
-				}
-				//if ($this->_doctype->entities()) {
-				//	$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
-				//}
-			}
-		} else if (!$doctypeFromSource) {
+		if ($explicit_doctype) {
 			if ($this->_doctype->entities()) {
 				$doctypeWithEntities = "<!DOCTYPE root [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
 				$ignoreLines = 3;
 				//$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE _root_ [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
+			}
+		} else {
+			if (preg_match('/^[\s\S]*?<\!DOCTYPE +([\w\W\s\S]*?)>/', $source, $matches)) {
+				$this->_doctypeString = trim($matches[0]);
+				$parts = explode(' ', trim($matches[1]));
+				$doctypeFromSource = trim($parts[0]);
+				$this->_doctype = Pagemill_Doctype::ForDoctype($doctypeFromSource);
+				//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
+				//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
+				if (strpos($this->_doctypeString, '[') === false) {
+					$ents = " [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
+					$source = substr($source, 0, strlen($matches[0]) - 1) . $ents . substr($source, strlen($matches[0]));
+					$ignoreLines = 3;
+					$ignoreBytes = strlen($ents);
+				}
+			}
+			if (!$doctypeFromSource && get_class($this->_doctype) == 'Pagemill_Doctype') {
+				// No doctype detected. Try the root element
+				if (preg_match('/<([a-z0-9\-_]+)/i', $source, $matches)) {
+					$doctype = $matches[1];
+					$this->_doctype = Pagemill_Doctype::ForDoctype($matches[1]);
+					//$this->_tagRegistry = array_merge($this->_tagRegistry, $this->_doctype->tagRegistry());
+					//$this->_attributeRegistry = array_merge($this->_attributeRegistry, $this->_doctype->attributeRegistry());
+					if ($this->_doctype->entities()) {
+						$doctypeWithEntities = "<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
+						$ignoreLines = 3;
+					}
+					//if ($this->_doctype->entities()) {
+					//	$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE {$matches[1]} [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
+					//}
+				}
+			} else if (!$doctypeFromSource) {
+				if ($this->_doctype->entities()) {
+					$doctypeWithEntities = "<!DOCTYPE root [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>\n";
+					$ignoreLines = 3;
+					//$source = substr($source, 0, strlen($xmlDecl)) . "\n<!DOCTYPE _root_ [\n" . $this->_entityReferences($this->_doctype->entities()) . "\n]>" . substr($source, strlen($xmlDecl));
+				}
 			}
 		}
 		$source = str_replace('<!--@', '<_tmplcomment><![CDATA[', $source);

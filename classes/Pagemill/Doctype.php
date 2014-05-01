@@ -28,7 +28,7 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 		return $this->_entities;
 	}
 	public function addEntity($text, $entity) {
-		$this->_externalEntities[$text] = $entity;
+		$this->_entities[$text] = $entity;
 	}
 	public function addEntityArray($array) {
 		$this->_entities = array_merge($this->_entities, $array);
@@ -101,6 +101,7 @@ class Pagemill_Doctype implements Pagemill_DoctypeInterface {
 	 * @param Pagemill_Doctype $next
 	 */
 	public function merge(Pagemill_Doctype $next) {
+		$this->_namespaces[$next->nsUri] = $next->_nsPrefix;
 		$this->_tagRegistry = array_merge($this->_tagRegistry, $next->_tagRegistry);
 		$this->_attributeRegistry = array_merge($this->_attributeRegistry, $next->_attributeRegistry);
 		$this->_entities = array_merge($this->_entities, $next->_entities);
