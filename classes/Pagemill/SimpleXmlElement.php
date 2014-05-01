@@ -131,7 +131,7 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 	}
 	public static function LoadHtml($string) {
 		$doc = new DOMDocument();
-		$doc->loadHTML($string);
+		@$doc->loadHTML($string);
 		$xml = simplexml_import_dom($doc, 'Pagemill_SimpleXmlElement');
 		return $xml;
 	}
@@ -192,6 +192,7 @@ class Pagemill_SimpleXmlElement extends SimpleXMLElement {
 	}
 	public function asXml($filename = null) {
 		$xml = parent::asXml();
+		$xml = self::_ConvertUtf8ToXmlEntities($xml);
 		if ($this->_defaultNamespace()) {
 			$xml = self::_InsertNamespace($this->_defaultNamespace(), $xml);
 		}
