@@ -25,30 +25,30 @@ An extension of PHP's SimpleXMLElement with features to simplify parsing of Page
 The class that builds a tree of tags from an XML document.
 
 * Parse a well-formed XML document.
-  TestOfPagemillParser::testParseWellFormedXmlDocument
+  * TestOfPagemillParser::testParseWellFormedXmlDocument
 * Parse a well-formed XML fragment as a tree with a root pm:template tag.
-  TestOfPagemillParser::testParseWellFormedXmlFragment
+  * TestOfPagemillParser::testParseWellFormedXmlFragment
 * Throw an exception on parsing a malformed XML document or fragment.
-  TestOfPagemillParser::testExceptionForMalformedXml
+  * TestOfPagemillParser::testExceptionForMalformedXml
 
 ## Pagemill_Doctype
 
 * Throw an exception on parsing a document with an undefined entity
-  TestOfPagemillDoctype::testExceptionForUndefinedEntity
+  * TestOfPagemillDoctype::testExceptionForUndefinedEntity
 * Register an entity for a doctype and parse a document that contains the entity
-  TestOfPagemillDoctype::testRegisterEntityAndParseinDocument
+  * TestOfPagemillDoctype::testRegisterEntityAndParseinDocument
 
 ## Pagemill_Data
 
 * Evaluate a variable.
-  TestOfPagemillData::testEvaluateVariable
+  * TestOfPagemillData::testEvaluateVariable
 * Evaluate a mathematical expression.
-  TestOfPagemillData::testEvaluateMath
+  * TestOfPagemillData::testEvaluateMath
 * Register and evaluate a function.
-  TestOfPagemillData::testRegisterAndEvaluateFunction
+  * TestOfPagemillData::testRegisterAndEvaluateFunction
 * Fork inherits parent values.
-  TestOfPagemillData::testForkInheritsParentValues
+  * TestOfPagemillData::testForkInheritsParentValues
 * Adding a value to a tine does not add it to the parent.
-  TestOfPagemillData::testForkHasLocalScope
+  * TestOfPagemillData::testForkHasLocalScope
 * Modifying a parent's value in the tine modifies it in the parent.
-  TestOfPagemillData::testForkValueDoesNotChangeParentValue
+  * TestOfPagemillData::testForkValueDoesNotChangeParentValue
