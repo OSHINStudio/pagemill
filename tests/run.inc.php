@@ -166,3 +166,16 @@ class TestOfPagemillData extends UnitTestCase {
 		$this->assertFalse($data['foo'] == 'baz', 'Modified value in fork changed value in parent');
 	}
 }
+
+class TestOfPagemillTag extends UnitTestCase {
+	public function testOutputSelfTerminatingElementWithAttribute() {
+		$tag = new Pagemill_Tag('my_tag', array('my_attribute' => 'my_value'), null, null);
+		$data = new Pagemill_Data();
+		$stream = new Pagemill_Stream(true);
+		$tag->process($data, $stream);
+		$output = $stream->clean();
+		$xml = Pagemill_SimpleXmlElement::LoadString($output);
+		$this->assertTrue($xml->getName() == 'my_tag', 'Tag did not process correct tag name');
+		$this->assertTrue($xml['my_attribute'] == 'my_value', 'Tag did not process correct attribute name/value');
+	}
+}

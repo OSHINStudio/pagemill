@@ -52,3 +52,8 @@ The class that builds a tree of tags from an XML document.
   * TestOfPagemillData::testForkHasLocalScope
 * Modifying a parent's value in the tine modifies it in the parent.
   * TestOfPagemillData::testForkValueDoesNotChangeParentValue
+
+## Pagemill_Tag
+
+* Output an empty self-terminating element with an attribute.
+  * TestOfPagemillTag::testOutputSelfTerminatingElementWithAttribute
