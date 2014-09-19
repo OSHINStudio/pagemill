@@ -124,7 +124,7 @@ class Pagemill_Tag extends Pagemill_Node {
 	protected function buildAttributeString(Pagemill_Data $data) {
 		$string = '';
 		foreach ($this->attributes as $key => $value) {
-			$string .= ' ' . $key . '="' . $this->doctype()->encodeEntities($data->parseVariables($value)) . '"';
+			$string .= ' ' . $key . '="' . ($this->doctype() ? $this->doctype()->encodeEntities($data->parseVariables($value)) : $data->parseVariables($value)) . '"';
 		}
 		return $string;
 	}

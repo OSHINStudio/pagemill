@@ -74,7 +74,7 @@ class Pagemill_Parser {
 				$ignoreBytes = strlen($ents);
 			}
 		}
-		if (!$doctypeFromSource && get_class($this->_doctype) == 'Pagemill_Doctype') {
+		if (!$doctypeFromSource && count($this->_doctype->entities()) == 0) {
 			// No doctype detected. Try the root element
 			if (preg_match('/<([a-z0-9\-_]+)/i', $source, $matches)) {
 				$doctype = $matches[1];
