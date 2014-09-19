@@ -246,7 +246,6 @@ class Pagemill_Tag extends Pagemill_Node {
 			if ($this->parent()) {
 				return $this->parent()->doctype();
 			}
-			return new Pagemill_Doctype('');
 		}
 		return $this->_doctype;
 	}
