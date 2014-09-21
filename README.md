@@ -13,7 +13,7 @@ Pagemill is an extensible XML-based templating engine.
 
 ## Template Syntax
 
-There are two aspects of templates: expressions, tags, and attributes.
+There are three aspects of templates: expressions, tags, and attributes.
 
 ### Expressions
 
